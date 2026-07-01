@@ -10,6 +10,8 @@ This is a research reference repository for **Retinal OCT Image Segmentation via
 
 The repo collects SOTA model implementations, evaluation metric code, and dataset preprocessing scripts. There is no unified training pipeline — each model file is a self-contained reference implementation.
 
+The root `README.md` is a general project overview. The in-progress implementation plan for a specific experiment (comparing traditional, graph-based, and deep-learning methods for retinal layer segmentation on DUKE-BOE) lives in `Implementation_Plan.md` — check it for current task status/decisions before starting related work.
+
 ## Repository Structure
 
 ```
