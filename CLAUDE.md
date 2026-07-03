@@ -12,6 +12,10 @@ The repo collects SOTA model implementations, evaluation metric code, and datase
 
 The root `README.md` is a general project overview. The in-progress implementation plan for a specific experiment (comparing traditional, graph-based, and deep-learning methods for retinal layer segmentation on DUKE-BOE) lives in `Implementation_Plan.md` — check it for current task status/decisions before starting related work.
 
+## Nested repos — do not modify
+
+`Retinal_OCT_Image_Segmentation_via_Deep_Learning/` and `Public-available-retinal-OCT-datasets/` are separate, independent git repos (own `.git`, own GitHub remotes under `ZhangHH233/`) checked in as gitlinks inside this repo. Do not edit, add, or commit files inside these two directories — treat them as read-only vendored upstream code. If a change is genuinely needed there, flag it to the user instead of editing directly.
+
 ## Repository Structure
 
 ```
