@@ -8,20 +8,29 @@ implementations collected in the accompanying survey:
 > datasets, and evaluation metrics," *Computerized Medical Imaging and Graphics*, 2025.
 > DOI: [10.1016/j.compmedimag.2025.102539](https://doi.org/10.1016/j.compmedimag.2025.102539)
 
-## Setup
+## Setup (Google Colab)
 
-```bash
-python -m venv venv
+This project is set up to run in a Google Colab notebook rather than a local virtual environment.
 
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+```python
+!git clone https://github.com/<your-username>/Segmentation.git
+%cd Segmentation
 
-pip install -r requirements.txt
+!pip install -r requirements.txt
 ```
 
-`venv/` and `data/` are gitignored — recreate the environment and re-download/place datasets on each machine.
+Colab preinstalls several of these packages (`torch`, `torchvision`, `numpy`, `scipy`,
+`scikit-learn`, `Pillow`, `scikit-image`) already, so the install step mainly picks up
+`SimpleITK`, `h5py`, `opencv-python`, `einops`, `timm`, and `thop`.
+
+Notes:
+- Each Colab runtime is ephemeral — re-run the install cell after every disconnect/restart.
+- `data/` is gitignored — mount Google Drive (`from google.colab import drive; drive.mount('/content/drive')`)
+  and point dataset paths there so files persist across sessions.
+- Dataset preprocessing scripts are invoked with `!python`, e.g.
+  `!python Public-available-retinal-OCT-datasets/BOE.py --input_root ... --output_root ...`.
+- Model files under `Retinal_OCT_Image_Segmentation_via_Deep_Learning/SOTAS/` are meant to be
+  `import`ed into notebook cells rather than run standalone.
 
 ### Nested repos (manual step on a new machine)
 
