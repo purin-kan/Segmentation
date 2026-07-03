@@ -1,0 +1,6 @@
+[submodule "external/Public-available-retinal-OCT-datasets"]
+	path = external/Public-available-retinal-OCT-datasets
+	url = https://github.com/ZhangHH233/Public-available-retinal-OCT-datasets.git
+[submodule "external/Retinal_OCT_Image_Segmentation_via_Deep_Learning"]
+	path = external/Retinal_OCT_Image_Segmentation_via_Deep_Learning
+	url = https://github.com/ZhangHH233/Retinal_OCT_Image_Segmentation_via_Deep_Learning.git
