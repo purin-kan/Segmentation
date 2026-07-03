@@ -14,51 +14,91 @@ The root `README.md` is a general project overview. The in-progress implementati
 
 ## Nested repos — do not modify
 
-`Retinal_OCT_Image_Segmentation_via_Deep_Learning/` and `Public-available-retinal-OCT-datasets/` are separate, independent git repos (own `.git`, own GitHub remotes under `ZhangHH233/`) checked in as gitlinks inside this repo. Do not edit, add, or commit files inside these two directories — treat them as read-only vendored upstream code. If a change is genuinely needed there, flag it to the user instead of editing directly.
+`external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/` and `external/Public-available-retinal-OCT-datasets/` are separate, independent git repos (own `.git`, own GitHub remotes under `ZhangHH233/`) checked in as gitlinks inside this repo. Do not edit, add, or commit files inside these two directories — treat them as read-only vendored upstream code. If a change is genuinely needed there, flag it to the user instead of editing directly.
 
 ## Repository Structure
 
 ```
-Retinal_OCT_Image_Segmentation_via_Deep_Learning/
-  SOTAS/
-    Layers_Segment/    # Layer segmentation models (BioNet, FourierNet, MGUNet, etc.)
-    Lesions_Segment/   # Lesion/fluid segmentation models (AnoGAN, ReLayNet, YNet, etc.)
-  Metrics/             # Evaluation metric implementations by category
-  Datasets.md          # Dataset catalog with download links
+src/                              # All self-implemented Python (experiment code + eval harness), not vendored
+  data/                           # Shared dataset loader + patient/volume-level split logic
+  preprocessing/                  # Flattening, ROI cropping, denoise, contrast enhancement
+  methods/                        # One subpackage per Family column of implementation_plan.md's Methods table
+    traditional/                  #   1a Intensity Thresholding, 1b Canny
+    model_based/                  #   2  Active Contours
+    graph_based/                  #   3a Graph Search, 3b Graph-Cut, 3c Dynamic Programming
+    region_based/                 #   4  Region Growing
+    deep_learning/                #   5a-5h CNN, FCN, U-Net, Boundary-Aware U-Net, TransUNet, Swin-UNet, 2.5D
+  postprocessing/                 # Boundary ordering / non-crossing enforcement for DL outputs
+  eval/
+    run_all_metrics.py            # Wrapper calling every metric in external/Retinal_OCT_.../Metrics/
+    run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> results/*.csv
 
-Public-available-retinal-OCT-datasets/
-  BOE.py               # Preprocessing for DUKE-BOE/Chiu DME .mat datasets
-  RETOUCH.py           # Preprocessing for RETOUCH .mhd volumes → PNG B-scans
-  Readme.md            # Extended dataset catalog
+configs/                          # Per-method experiment configs (paths, hyperparameters, split seeds)
+notebooks/                        # Colab notebooks — the actual run entry points (see below)
+results/                          # Gitignored — metric CSVs, overlays, checkpoints written by notebooks
+data/                             # Gitignored — raw + preprocessed DUKE-DME data
+  raw/                            # Untouched downloaded datasets (e.g. Publication_Dataset/, .zip archives)
+  processed/                      # Output of src/preprocessing/ + notebooks/01_preprocessing.ipynb
+
+external/                         # Vendored reference repos (read-only, see above)
+  Retinal_OCT_Image_Segmentation_via_Deep_Learning/
+    SOTAS/
+      Layers_Segment/    # Layer segmentation models (BioNet, FourierNet, MGUNet, etc.)
+      Lesions_Segment/   # Lesion/fluid segmentation models (AnoGAN, ReLayNet, YNet, etc.)
+    Metrics/             # Evaluation metric implementations by category
+    Datasets.md          # Dataset catalog with download links
+
+  Public-available-retinal-OCT-datasets/
+    BOE.py               # Preprocessing for DUKE-BOE/Chiu DME .mat datasets
+    RETOUCH.py           # Preprocessing for RETOUCH .mhd volumes → PNG B-scans
+    Readme.md            # Extended dataset catalog
 ```
+
+`src/methods/*` are currently stubs (`raise NotImplementedError`) — implementation status per
+method is tracked in `implementation_plan.md`'s Methods table, not here.
+
+### Notebooks are the run surface
+
+This project executes exclusively on a Google Colab server (connected via the VS Code Colab
+extension, working directly against local workspace files — no `git clone` step). There is no
+local terminal to run scripts from. `notebooks/*.ipynb` are therefore the actual entry points,
+run in order:
+
+1. `00_setup.ipynb` — install deps, verify imports, optionally mount Drive for persistent `data/`
+2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/preprocessing/`
+3. `02_run_methods.ipynb` — import one `src/methods/*` implementation, score it via `src/eval/run_experiment.py`
+4. `03_results_analysis.ipynb` — load `results/*.csv`, build the cross-method comparison table
+
+Everything under `src/` must stay plain importable Python (functions/classes), not
+argparse-only CLI scripts, so it can be called directly from notebook cells.
 
 ## Key Architectural Patterns
 
-**Model files** (`SOTAS/**/*.py`): Each file implements a single SOTA network as a PyTorch `nn.Module`. The original paper citation is embedded as a docstring at the top. Multi-file models (e.g., `SD_Layer_Net/`, `FourierNet/`) contain modular components (encoder, decoder, etc.).
+**Model files** (`external/Retinal_OCT_.../SOTAS/**/*.py`): Each file implements a single SOTA network as a PyTorch `nn.Module`. The original paper citation is embedded as a docstring at the top. Multi-file models (e.g., `SD_Layer_Net/`, `FourierNet/`) contain modular components (encoder, decoder, etc.).
 
-**Metrics** (`Metrics/*.py`): Pure NumPy/SciPy functions, no ML dependencies. Organized into five files by metric family:
+**Metrics** (`external/Retinal_OCT_.../Metrics/*.py`): Pure NumPy/SciPy functions, no ML dependencies. Organized into five files by metric family:
 - `Region_based_metrics.py` — Dice, IoU, Precision, Recall
 - `ConfusionMatrix_based_metrics.py` — Accuracy, Sensitivity, Specificity, AUC
 - `Contour_based_metrics.py` — Hausdorff Distance (HD, HD95), ASSD, MAD
 - `PixelError_based_metrics.py` — MSE, RMSE
 - `Biomarker_based_metrics.py` — Thickness Difference, Vascularity Index
 
-**Dataset preprocessors** (`Public-available-retinal-OCT-datasets/*.py`): CLI scripts that convert raw dataset formats (`.mat` via scipy/h5py, `.mhd` via SimpleITK) into PNG B-scans with matching label PNGs and a `metadata.csv`.
+**Dataset preprocessors** (`external/Public-available-retinal-OCT-datasets/*.py`): CLI scripts that convert raw dataset formats (`.mat` via scipy/h5py, `.mhd` via SimpleITK) into PNG B-scans with matching label PNGs and a `metadata.csv`.
 
 ## Running Dataset Preprocessors
 
 ```bash
 # BOE/Chiu DME dataset — inspect .mat keys first
-python Public-available-retinal-OCT-datasets/BOE.py --input_root "<path>" --inspect
+python external/Public-available-retinal-OCT-datasets/BOE.py --input_root "<path>" --inspect
 
 # BOE/Chiu DME dataset — full preprocessing
-python Public-available-retinal-OCT-datasets/BOE.py \
+python external/Public-available-retinal-OCT-datasets/BOE.py \
   --input_root "<path_to_mat_files>" \
   --output_root "<output_path>" \
   --save_overlay
 
 # RETOUCH dataset — edit root_dir/save_dir inside RETOUCH.py, then run
-python Public-available-retinal-OCT-datasets/RETOUCH.py
+python external/Public-available-retinal-OCT-datasets/RETOUCH.py
 ```
 
 ## Dependencies

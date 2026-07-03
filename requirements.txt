@@ -10,7 +10,7 @@ opencv-python
 SimpleITK
 matplotlib
 
-# Deep learning (model reference implementations)
+# Deep learning
 torch
 torchvision
 einops

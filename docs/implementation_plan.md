@@ -1,5 +1,11 @@
 # Implementation Plan: Retinal Layer Segmentation in OCT Images
 
+1. decide preprocessing pipeline (Items in setup)
+2. decide on data split strategy, look at relevant literature
+3. decide on metrics to use (all?)
+4. decide on post processing
+5. compute reports after running
+
 ## Setup
 
 - [x] **Dataset:** DUKE-DME
@@ -10,7 +16,7 @@
   - Cropping (ROI around retina)
   - Noise reduction
   - Contrast enhancement
-- [ ] **Metrics:** reuse `Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/`.
+- [ ] **Metrics:** reuse `external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/`.
   - Primary: boundary-based — MAD / HD95 (layers are thin; pixel-overlap metrics hide
     boundary shifts)
   - Secondary: Dice / IoU, per-layer thickness error
@@ -25,7 +31,6 @@
 - [ ] **2.5D backbone** — which architecture (5h) the 2.5D input stacking is applied to
 - [ ] **Postprocessing** — how DL outputs get ordered, non-crossing boundaries, to compare
       fairly against Graph Search/DP/Graph-Cut (which enforce this inherently)
-- [ ] **Compute/time budget** — rough milestone or time estimate per method
 
 ## Methods
 

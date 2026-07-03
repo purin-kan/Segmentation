@@ -1,6 +1,6 @@
 """
 Wrapper that runs every metric implemented in
-Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/
+external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/
 (Region_based_metrics.py, ConfusionMatrix_based_metrics.py,
 Contour_based_metrics.py, PixelError_based_metrics.py,
 Biomarker_based_metrics.py) against one prediction, a whole method's test
@@ -16,6 +16,8 @@ _METRICS_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "..",
+        "..",
+        "external",
         "Retinal_OCT_Image_Segmentation_via_Deep_Learning",
         "Metrics",
     )
