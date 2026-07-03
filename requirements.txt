@@ -1,0 +1,18 @@
+# Core
+numpy
+scipy
+scikit-image
+scikit-learn
+Pillow
+h5py
+imageio
+opencv-python
+SimpleITK
+matplotlib
+
+# Deep learning (model reference implementations)
+torch
+torchvision
+einops
+timm
+thop
