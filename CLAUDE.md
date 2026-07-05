@@ -107,6 +107,10 @@ Core: `torch`, `torchvision`, `numpy`, `scipy`, `scikit-image`, `SimpleITK`, `Pi
 
 There is no `requirements.txt` or `setup.py`. Install dependencies manually per model/script as needed.
 
+## Git Commit Conventions
+
+Do not add a `Co-Authored-By` / co-author tag to commit messages.
+
 ## Domain Abbreviations
 
 When reading or writing about datasets and pathologies:
