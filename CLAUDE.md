@@ -10,7 +10,7 @@ This is a research reference repository for **Retinal OCT Image Segmentation via
 
 The repo collects SOTA model implementations, evaluation metric code, and dataset preprocessing scripts. There is no unified training pipeline — each model file is a self-contained reference implementation.
 
-The root `README.md` is a general project overview. The in-progress implementation plan for a specific experiment (comparing traditional, graph-based, and deep-learning methods for retinal layer segmentation on DUKE-BOE) lives in `Implementation_Plan.md` — check it for current task status/decisions before starting related work.
+The root `README.md` is a general project overview. The in-progress implementation plan for a specific experiment (comparing traditional, graph-based, and deep-learning methods for retinal layer segmentation on DUKE-BOE) lives in `docs/implementation_plan.md` — check it for current task status/decisions before starting related work.
 
 ## Nested repos — do not modify
 
@@ -22,7 +22,7 @@ The root `README.md` is a general project overview. The in-progress implementati
 src/                              # All self-implemented Python (experiment code + eval harness), not vendored
   data/                           # Shared dataset loader + patient/volume-level split logic
   preprocessing/                  # Flattening, ROI cropping, denoise, contrast enhancement
-  methods/                        # One subpackage per Family column of implementation_plan.md's Methods table
+  methods/                        # One subpackage per Family column of docs/implementation_plan.md's Methods table
     traditional/                  #   1a Intensity Thresholding, 1b Canny
     model_based/                  #   2  Active Contours
     graph_based/                  #   3a Graph Search, 3b Graph-Cut, 3c Dynamic Programming
@@ -31,14 +31,17 @@ src/                              # All self-implemented Python (experiment code
   postprocessing/                 # Boundary ordering / non-crossing enforcement for DL outputs
   eval/
     run_all_metrics.py            # Wrapper calling every metric in external/Retinal_OCT_.../Metrics/
-    run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> results/*.csv
+    run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> output/*.csv
+  configs/                        # Per-method experiment configs (paths, hyperparameters, split seeds)
+  notebooks/                      # Colab notebooks — the actual run entry points (see below)
 
-configs/                          # Per-method experiment configs (paths, hyperparameters, split seeds)
-notebooks/                        # Colab notebooks — the actual run entry points (see below)
-results/                          # Gitignored — metric CSVs, overlays, checkpoints written by notebooks
+scripts/                          # Local-machine helpers (NOT Colab): Google Drive relay — see scripts/README.md
+output/                           # Gitignored — metric CSVs, overlays, checkpoints (Drive-backed OUTPUT_ROOT on Colab)
 data/                             # Gitignored — raw + preprocessed DUKE-DME data
   raw/                            # Untouched downloaded datasets (e.g. Publication_Dataset/, .zip archives)
-  processed/                      # Output of src/preprocessing/ + notebooks/01_preprocessing.ipynb
+  processed/                      # Output of src/preprocessing/ + src/notebooks/01_preprocessing.ipynb
+
+docs/                             # implementation_plan.md (task status/decisions — read first), citation.md
 
 external/                         # Vendored reference repos (read-only, see above)
   Retinal_OCT_Image_Segmentation_via_Deep_Learning/
@@ -55,22 +58,29 @@ external/                         # Vendored reference repos (read-only, see abo
 ```
 
 `src/methods/*` are currently stubs (`raise NotImplementedError`) — implementation status per
-method is tracked in `implementation_plan.md`'s Methods table, not here.
+method is tracked in `docs/implementation_plan.md`'s Methods table, not here.
 
 ### Notebooks are the run surface
 
-This project executes exclusively on a Google Colab server (connected via the VS Code Colab
-extension, working directly against local workspace files — no `git clone` step). There is no
-local terminal to run scripts from. `notebooks/*.ipynb` are therefore the actual entry points,
-run in order:
+This project's experiment code executes exclusively on a Google Colab server (connected via the
+VS Code Colab extension, working directly against local workspace files — no `git clone` step).
+The experiment has no local run surface — `notebooks/*.ipynb` are the actual entry points, run in
+order:
 
-1. `00_setup.ipynb` — install deps, verify imports, optionally mount Drive for persistent `data/`
+1. `00_setup.ipynb` — the sole setup notebook: install deps, verify imports, pull `external/*`
+   submodules. Its (optional) Drive cell mounts Google Drive and defines `DATA_ROOT` / `OUTPUT_ROOT`
+   at `MyDrive/Segmentation/` so data + results persist across the ephemeral runtime. Downstream
+   notebooks read those two variables, so run this first.
 2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/preprocessing/`
-3. `02_run_methods.ipynb` — import one `src/methods/*` implementation, score it via `src/eval/run_experiment.py`
-4. `03_results_analysis.ipynb` — load `results/*.csv`, build the cross-method comparison table
+3. `02_run_methods.ipynb` — import one `src/methods/*` implementation, score it via `src/eval/run_experiment.py`; writes per-method CSVs under `OUTPUT_ROOT`
+4. `03_results_analysis.ipynb` — load the `OUTPUT_ROOT/*.csv` summaries, build the cross-method comparison table
 
 Everything under `src/` must stay plain importable Python (functions/classes), not
 argparse-only CLI scripts, so it can be called directly from notebook cells.
+
+The one exception to "runs on Colab": `scripts/` holds **local-machine** helpers that run on your
+own computer, not the Colab VM — a Google Drive relay to pull `OUTPUT_ROOT` results down and clear
+them off Drive. See `scripts/README.md`.
 
 ## Key Architectural Patterns
 
@@ -103,9 +113,12 @@ python external/Public-available-retinal-OCT-datasets/RETOUCH.py
 
 ## Dependencies
 
-Core: `torch`, `torchvision`, `numpy`, `scipy`, `scikit-image`, `SimpleITK`, `Pillow`, `scikit-learn`, `h5py`, `imageio`
+Pinned in `requirements.txt`: `numpy`, `scipy`, `scikit-image`, `scikit-learn`, `Pillow`, `h5py`,
+`imageio`, `opencv-python`, `SimpleITK`, `matplotlib`, `torch`, `torchvision`, `einops`, `timm`, `thop`.
 
-There is no `requirements.txt` or `setup.py`. Install dependencies manually per model/script as needed.
+`00_setup.ipynb` installs them on the Colab runtime with `pip install -r requirements.txt`. There is
+no `setup.py` — `src/` is imported directly from the notebooks (kept plain-importable), not installed
+as a package.
 
 ## Git Commit Conventions
 
