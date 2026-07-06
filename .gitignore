@@ -6,6 +6,8 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
+/temp
+
 output/*
 !output/.gitkeep
 
