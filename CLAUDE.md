@@ -34,8 +34,8 @@ src/                              # All self-implemented Python (experiment code
     run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> output/*.csv
   configs/                        # Per-method experiment configs (paths, hyperparameters, split seeds)
   notebooks/                      # Colab notebooks — the actual run entry points (see below)
+  scripts/                        # Local-machine helpers (NOT Colab): Google Drive relay — see src/scripts/README.md
 
-scripts/                          # Local-machine helpers (NOT Colab): Google Drive relay — see scripts/README.md
 output/                           # Gitignored — metric CSVs, overlays, checkpoints (Drive-backed OUTPUT_ROOT on Colab)
 data/                             # Gitignored — raw + preprocessed DUKE-DME data
   raw/                            # Untouched downloaded datasets (e.g. Publication_Dataset/, .zip archives)
@@ -78,9 +78,9 @@ order:
 Everything under `src/` must stay plain importable Python (functions/classes), not
 argparse-only CLI scripts, so it can be called directly from notebook cells.
 
-The one exception to "runs on Colab": `scripts/` holds **local-machine** helpers that run on your
+The one exception to "runs on Colab": `src/scripts/` holds **local-machine** helpers that run on your
 own computer, not the Colab VM — a Google Drive relay to pull `OUTPUT_ROOT` results down and clear
-them off Drive. See `scripts/README.md`.
+them off Drive. See `src/scripts/README.md`.
 
 ## Key Architectural Patterns
 
@@ -119,6 +119,12 @@ Pinned in `requirements.txt`: `numpy`, `scipy`, `scikit-image`, `scikit-learn`, 
 `00_setup.ipynb` installs them on the Colab runtime with `pip install -r requirements.txt`. There is
 no `setup.py` — `src/` is imported directly from the notebooks (kept plain-importable), not installed
 as a package.
+
+## Working Directory
+
+Make changes directly in the main working checkout. Do not create or work in a git
+worktree for changes in this repo (background sessions have `worktree.bgIsolation` set
+to `none` in `.claude/settings.local.json` so direct edits are allowed).
 
 ## Git Commit Conventions
 

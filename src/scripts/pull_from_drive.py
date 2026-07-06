@@ -6,14 +6,14 @@ Runs locally, not on the Colab VM.
 Drives `rclone`: each file is copied and checksummed before its Drive copy is removed.
 
 Run one-time setup before using:
-    macOS/Linux:  scripts/setup_rclone.sh
-    Windows:      powershell -ExecutionPolicy Bypass -File scripts\\setup_rclone.ps1
+    macOS/Linux:  src/scripts/setup_rclone.sh
+    Windows:      powershell -ExecutionPolicy Bypass -File src\\scripts\\setup_rclone.ps1
 
 Usage:
-    python scripts/pull_from_drive.py                 # pull default "output"
-    python scripts/pull_from_drive.py processed       # pull another subfolder
-    python scripts/pull_from_drive.py output --dest /some/local/dir
-    python scripts/pull_from_drive.py --yes           # skip the confirm prompt
+    python src/scripts/pull_from_drive.py                 # pull default "output"
+    python src/scripts/pull_from_drive.py processed       # pull another subfolder
+    python src/scripts/pull_from_drive.py output --dest /some/local/dir
+    python src/scripts/pull_from_drive.py --yes           # skip the confirm prompt
 """
 from __future__ import annotations
 

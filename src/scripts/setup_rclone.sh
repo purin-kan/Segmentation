@@ -28,4 +28,4 @@ fi
 
 echo
 echo "Done. Verify with:   rclone lsd ${REMOTE}:"
-echo "Pull results with:   python scripts/pull_from_drive.py"
+echo "Pull results with:   python src/scripts/pull_from_drive.py"

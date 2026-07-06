@@ -1,10 +1,10 @@
 <#
 One-time setup (Windows / PowerShell): install rclone and create a Google Drive
-remote named "gdrive" so `scripts\pull_from_drive.py` can reach Drive.
+remote named "gdrive" so `src\scripts\pull_from_drive.py` can reach Drive.
 Safe to re-run.
 
 Run from the repo root:
-    powershell -ExecutionPolicy Bypass -File scripts\setup_rclone.ps1
+    powershell -ExecutionPolicy Bypass -File src\scripts\setup_rclone.ps1
 #>
 $ErrorActionPreference = "Stop"
 $Remote = if ($env:RCLONE_REMOTE) { $env:RCLONE_REMOTE } else { "gdrive" }
@@ -39,4 +39,4 @@ if ((rclone listremotes) -contains "${Remote}:") {
 
 Write-Host ""
 Write-Host "Done. Verify with:   rclone lsd ${Remote}:"
-Write-Host "Pull results with:   python scripts\pull_from_drive.py"
+Write-Host "Pull results with:   python src\scripts\pull_from_drive.py"
