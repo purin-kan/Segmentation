@@ -41,6 +41,13 @@
 
 [HC-MS](https://iacl.ece.jhu.edu/index.php/Resources) (Healthy and Multiple Sclerosis, used for control)
 
+Y. He, A. Carass, S.D. Solomon, S. Saidha, P.A. Calabresi, and J.L.
+Prince, “Retinal layer parcellation of optical coherence tomography
+images: Data resource for Multiple Sclerosis and Healthy Controls”,
+Data in Brief, 22:601-604, 2019. (DOI: 10.1016/j.dib.2018.12.073)
+(PubMed: 30671506)
+
+```bibtex
 @article{he2019retinal,
   title={Retinal layer parcellation of optical coherence tomography images: Data resource for multiple sclerosis and healthy controls},
   author={He, Yufan and Carass, Aaron and Solomon, Sharon D and Saidha, Shiv and Calabresi, Peter A and Prince, Jerry L},
@@ -68,12 +75,7 @@
   year={2020},
   publisher={Elsevier}
 }
-
-Y. He, A. Carass, S.D. Solomon, S. Saidha, P.A. Calabresi, and J.L.
-Prince, “Retinal layer parcellation of optical coherence tomography
-images: Data resource for Multiple Sclerosis and Healthy Controls”,
-Data in Brief, 22:601-604, 2019. (DOI: 10.1016/j.dib.2018.12.073)
-(PubMed: 30671506)
+```
 
 ---
 
