@@ -30,7 +30,9 @@ src/                              # All self-implemented Python (experiment code
     deep_learning/                #   5a-5h CNN, FCN, U-Net, Boundary-Aware U-Net, TransUNet, Swin-UNet, 2.5D
   postprocessing/                 # Boundary ordering / non-crossing enforcement for DL outputs
   eval/
-    run_all_metrics.py            # Wrapper calling every metric in external/Retinal_OCT_.../Metrics/
+    metrics.py                    # Aggregates region_metrics.py + boundary_metrics.py into per-method summaries/CSV
+    region_metrics.py             # Dice, IoU — per layer, then averaged
+    boundary_metrics.py           # MAD, RMSE — per boundary, then averaged
     run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> output/*.csv
   configs/                        # Per-method experiment configs (paths, hyperparameters, split seeds)
   notebooks/                      # Colab notebooks — the actual run entry points (see below)
