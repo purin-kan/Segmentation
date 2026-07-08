@@ -84,3 +84,7 @@ Data in Brief, 22:601-604, 2019. (DOI: 10.1016/j.dib.2018.12.073)
  S. J. Chiu, M. J. Allingham, P. S. Mettu, S. W. Cousins, J. A. Izatt, S. Farsiu, "Kernel regression based segmentation of optical coherence tomography images with diabetic macular edema", ( BIOMEDICAL OPTICS EXPRESS), 6(4), pp. 1172-1194, April, 2015
 
 ---
+
+## De-noising
+
+[BM3D](https://webpages.tuni.fi/foi/GCF-BM3D/index.html#ref_problems)
