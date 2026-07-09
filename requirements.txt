@@ -9,6 +9,7 @@ imageio
 opencv-python
 SimpleITK
 matplotlib
+bm3d
 
 # Deep learning
 torch
