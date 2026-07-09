@@ -20,8 +20,8 @@ OUTPUT_ROOT           MyDrive/Segmentation/output    src/scripts/pull_from_drive
 ## Setup
 
 ```bash
-src/scripts/setup_rclone.sh                                           # macOS/Linux
-powershell -ExecutionPolicy Bypass -File src\scripts\setup_rclone.ps1  # Windows
+src/scripts/setup_rclone.sh                                              # macOS/Linux
+powershell -ExecutionPolicy Bypass -File src\scripts\setup_rclone.ps1    # Windows
 ```
 
 Creates an rclone remote named `gdrive` with full `drive` scope — `drive.file` scope can't see

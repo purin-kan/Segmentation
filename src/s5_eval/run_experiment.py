@@ -1,12 +1,12 @@
 """
 Shared eval harness: one data loader + inference + metrics call, reused by
-every method in src/methods/ (implementation_plan.md, Setup).
+every method in src/s3_methods/ (implementation_plan.md, Setup).
 
 Meant to be imported into a Colab notebook cell, not run as a standalone
-CLI script — see notebooks/02_run_methods.ipynb.
+CLI script — see src/notebooks/02_run_methods.ipynb.
 """
 
-from src.eval.metrics import evaluate_method
+from src.s5_eval.metrics import evaluate_method
 
 
 def run_experiment(method_name, segment_fn, dataset, output_csv=None):
@@ -19,9 +19,9 @@ def run_experiment(method_name, segment_fn, dataset, output_csv=None):
         method_name: label used in results tables/plots.
         segment_fn: callable(bscan, **kwargs) -> predicted per-layer masks
             and per-boundary positions, matching the segment()/forward()
-            signature of the src/methods/* stubs.
+            signature of the src/s3_methods/* stubs.
         dataset: iterable of (bscan, y_true_layers, y_true_boundaries)
-            samples, typically a src.data.dataset.OCTDataset test split.
+            samples, typically a src.s1_data.dataset.OCTDataset test split.
         output_csv: optional path to save the per-method metrics summary.
     Returns:
         (per_sample, summary) as returned by eval.metrics.evaluate_method.

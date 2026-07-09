@@ -8,8 +8,8 @@ import csv
 
 import numpy as np
 
-from src.eval.region_metrics import region_metrics
-from src.eval.boundary_metrics import boundary_metrics
+from src.s5_eval.region_metrics import region_metrics
+from src.s5_eval.boundary_metrics import boundary_metrics
 
 
 def compute_metrics(y_true_layers, y_pred_layers, y_true_boundaries, y_pred_boundaries):

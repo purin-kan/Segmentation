@@ -20,28 +20,31 @@ The root `README.md` is a general project overview. The in-progress implementati
 
 ```
 src/                              # All self-implemented Python (experiment code + eval harness), not vendored
-  data/                           # Shared dataset loader + patient/volume-level split logic
-  preprocessing/                  # Flattening, ROI cropping, denoise, contrast enhancement
-  methods/                        # One subpackage per Family column of docs/implementation_plan.md's Methods table
-    traditional/                  #   1a Intensity Thresholding, 1b Canny
-    model_based/                  #   2  Active Contours
-    graph_based/                  #   3a Graph Search, 3b Graph-Cut, 3c Dynamic Programming
-    region_based/                 #   4  Region Growing
-    deep_learning/                #   5a-5h CNN, FCN, U-Net, Boundary-Aware U-Net, TransUNet, Swin-UNet, 2.5D
-  postprocessing/                 # Boundary ordering / non-crossing enforcement for DL outputs
-  eval/
+                                   # s1-s5 are numbered pipeline steps, in execution order; configs/notebooks/scripts
+                                   # are cross-cutting support, not steps, so they stay unprefixed
+  configs/                        # Per-method experiment configs (paths, hyperparameters, split seeds)
+  s1_data/                        # Shared dataset loader + patient/volume-level split logic
+  s2_preprocessing/               # Denoise (flattening/cropping happen upstream in the MATLAB extraction, so no
+                                   # separate flatten/crop step here)
+  s3_methods/                     # One subpackage per Family column of docs/implementation_plan.md's Methods table
+    m1_traditional/                 #   1a Intensity Thresholding, 1b Canny
+    m2_model_based/                 #   2  Active Contours
+    m3_graph_based/                 #   3a Graph Search, 3b Graph-Cut, 3c Dynamic Programming
+    m4_region_based/                #   4  Region Growing
+    m5_deep_learning/               #   5a-5h CNN, FCN, U-Net, Boundary-Aware U-Net, TransUNet, Swin-UNet, 2.5D
+  s4_postprocessing/               # Boundary ordering / non-crossing enforcement for DL outputs
+  s5_eval/
     metrics.py                    # Aggregates region_metrics.py + boundary_metrics.py into per-method summaries/CSV
     region_metrics.py             # Dice, IoU — per layer, then averaged
     boundary_metrics.py           # MAD, RMSE — per boundary, then averaged
     run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> output/*.csv
-  configs/                        # Per-method experiment configs (paths, hyperparameters, split seeds)
   notebooks/                      # Colab notebooks — the actual run entry points (see below)
   scripts/                        # Local-machine helpers (NOT Colab): Google Drive relay — see src/scripts/README.md
 
 output/                           # Gitignored — metric CSVs, overlays, checkpoints (Drive-backed OUTPUT_ROOT on Colab)
 data/                             # Gitignored — raw + preprocessed DUKE-DME data
   raw/                            # Untouched downloaded datasets (e.g. Publication_Dataset/, .zip archives)
-  processed/                      # Output of src/preprocessing/ + src/notebooks/01_preprocessing.ipynb
+  processed/                      # Output of src/s2_preprocessing/ + src/notebooks/01_preprocessing.ipynb
 
 docs/                             # implementation_plan.md (task status/decisions — read first), citation.md
 
@@ -59,7 +62,7 @@ external/                         # Vendored reference repos (read-only, see abo
     Readme.md            # Extended dataset catalog
 ```
 
-`src/methods/*` are currently stubs (`raise NotImplementedError`) — implementation status per
+`src/s3_methods/*` are currently stubs (`raise NotImplementedError`) — implementation status per
 method is tracked in `docs/implementation_plan.md`'s Methods table, not here.
 
 ### Notebooks are the run surface
@@ -73,8 +76,8 @@ order:
    submodules. Its (optional) Drive cell mounts Google Drive and defines `DATA_ROOT` / `OUTPUT_ROOT`
    at `MyDrive/Segmentation/` so data + results persist across the ephemeral runtime. Downstream
    notebooks read those two variables, so run this first.
-2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/preprocessing/`
-3. `02_run_methods.ipynb` — import one `src/methods/*` implementation, score it via `src/eval/run_experiment.py`; writes per-method CSVs under `OUTPUT_ROOT`
+2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/s2_preprocessing/`
+3. `02_run_methods.ipynb` — import one `src/s3_methods/*` implementation, score it via `src/s5_eval/run_experiment.py`; writes per-method CSVs under `OUTPUT_ROOT`
 4. `03_results_analysis.ipynb` — load the `OUTPUT_ROOT/*.csv` summaries, build the cross-method comparison table
 
 Everything under `src/` must stay plain importable Python (functions/classes), not
