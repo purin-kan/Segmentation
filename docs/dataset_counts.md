@@ -27,7 +27,8 @@ Location: `data/raw/OCT_Manual_Delineations-2018_June_29/{vol,delineation}/`
 | B-scans per patient | 49 |
 | Total B-scans | 1,715 |
 | Annotated B-scans | all 49/patient |
-| Boundaries per B-scan | 11 (32 patients); 9 (3 MS patients: `ms14`, `ms16`, `ms17`) |
+| Boundaries per B-scan (raw delineation `.mat`) | 11 (32 patients, `control_pts`); 9 (3 MS patients: `ms14`, `ms16`, `ms17`, direct `bd_pts`) |
+| Boundaries per B-scan (`generate_hc_train.m` output) | 9, all 35 patients — `Preprocess.m` drops surfaces 3 and 11 whenever the raw data has 11 |
 
 ## Combined
 

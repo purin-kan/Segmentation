@@ -4,6 +4,8 @@
 
 [Zhang et al. 2025 Survey](https://doi.org/10.1016/j.compmedimag.2025.102539) (accompanying survey paper)
 
+`external/Public-available-retinal-OCT-datasets/BOE.py` is from this survey's companion repo.
+
 ```bibtex
 @article{ZHANG2025102539,
   title = {Retinal OCT image segmentation with deep learning: A review of advances, datasets, and evaluation metrics},
@@ -38,8 +40,11 @@
 
 ## Datasets
 
-
 [HC-MS](https://iacl.ece.jhu.edu/index.php/Resources) (Healthy and Multiple Sclerosis, used for control)
+
+`external/oct_preprocess/Scripts/generate_hc_train.m` (flatten + crop preprocessing, used to
+extract this dataset's images/labels) is from He et al.'s companion repo
+([heyufan1995/oct_preprocess](https://github.com/heyufan1995/oct_preprocess)).
 
 Y. He, A. Carass, S.D. Solomon, S. Saidha, P.A. Calabresi, and J.L.
 Prince, “Retinal layer parcellation of optical coherence tomography
@@ -65,6 +70,17 @@ Data in Brief, 22:601-604, 2019. (DOI: 10.1016/j.dib.2018.12.073)
   pages={120--128},
   year={2019},
   organization={Springer}
+}
+
+@article{he2019deep,
+  title={Deep learning based topology guaranteed surface and MME segmentation of multiple sclerosis subjects from retinal OCT},
+  author={He, Yufan and Carass, Aaron and Liu, Yihao and Jedynak, Bruno M and Solomon, Sharon D and Saidha, Shiv and Calabresi, Peter A and Prince, Jerry L},
+  journal={Biomedical Optics Express},
+  volume={10},
+  number={10},
+  pages={5042--5058},
+  year={2019},
+  publisher={Optica Publishing Group}
 }
 
 @article{he2020structured,
