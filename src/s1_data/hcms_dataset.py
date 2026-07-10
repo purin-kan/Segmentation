@@ -1,27 +1,64 @@
 """HC-MS dataset loader (implementation_plan.md, Setup > Shared eval harness).
 
 Reads the image/*.png + label/*.txt output of
-external/oct_preprocess/Scripts/generate_hc_train.m (see temp/HCMS_usage.md)
-into the same (image, boundaries, subject_id) sample shape as
-src.s1_data.dataset.OCTDataset, so both datasets can share one eval harness.
+external/oct_preprocess/Scripts/generate_hc_train.m into the same
+(image, boundaries, subject_id) sample shape as src.s1_data.dataset.OCTDataset,
+so both datasets can share one eval harness.
 
-Blocked on actually running generate_hc_train.m — that output doesn't exist
-locally yet. Notes for whoever implements this:
-  - label/*.txt is JSON {"bds": [...]}, not a .npy — parse and reshape to
-    the (n_boundaries, width) convention src.s1_data.labels expects.
-  - MATLAB is 1-indexed: subtract 1 from every row position in "bds".
+label/*.txt contains JSON {"bds": [...]} with MATLAB 1-indexed boundaries.
 """
+
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+from src.s1_data.labels import load_boundaries_json
 
 
 class HCMSDataset:
+    """One sample = one B-scan: (image, boundaries, subject_id)."""
+
     def __init__(self, result_dir, patient_ids=None):
-        raise NotImplementedError
+        """
+        Args:
+            result_dir: path to directory containing {image,label}/ subdirs.
+            patient_ids: if provided, only load samples matching these IDs.
+        """
+        self.result_dir = Path(result_dir)
+        self.samples = self._load_samples(patient_ids)
+
+    def _load_samples(self, patient_ids):
+        samples = []
+        image_dir = self.result_dir / "image"
+        label_dir = self.result_dir / "label"
+
+        for image_path in sorted(image_dir.glob("*.png")):
+            label_path = label_dir / (image_path.stem + ".txt")
+            if not label_path.exists():
+                continue
+
+            parts = image_path.stem.split("_")
+            subject_id = "_".join(parts[:-1])
+            if patient_ids is not None and subject_id not in patient_ids:
+                continue
+
+            boundaries = load_boundaries_json(label_path)
+            samples.append({
+                "subject_id": subject_id,
+                "image_path": image_path,
+                "boundaries": boundaries,
+            })
+
+        return samples
 
     def __len__(self):
-        raise NotImplementedError
+        return len(self.samples)
 
     def __getitem__(self, idx):
-        raise NotImplementedError
+        sample = self.samples[idx]
+        image = np.asarray(Image.open(sample["image_path"]))
+        return image, sample["boundaries"], sample["subject_id"]
 
     def patient_ids(self):
-        raise NotImplementedError
+        return sorted({s["subject_id"] for s in self.samples})

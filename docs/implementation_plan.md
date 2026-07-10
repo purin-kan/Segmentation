@@ -36,15 +36,24 @@
     - **script**: `external/Public-available-retinal-OCT-datasets/BOE.py`, from the survey's
       companion repo (see `docs/citation.md`).
     - **inputs**: `data/raw/2015_BOE_Chiu/Subject_01.mat` – `Subject_10.mat`.
+    - **regenerate**:
+      ```bash
+      python external/Public-available-retinal-OCT-datasets/BOE.py \
+        --input_root data/raw/2015_BOE_Chiu \
+        --output_root data/processed/duke_dme_unannotated \
+        --save_overlay
+      rm -rf data/processed/duke_dme_unannotated/{labels_fluid1,labels_fluid2,npz,overlays_fluid1,overlays_fluid2,splits}
+      ```
     - **output**: `data/processed/duke_dme_unannotated/{images,layers}/` + `metadata.csv`
       - 610 `images/*.png` (768x496 grayscale, percentile-stretched to uint8, **raw**:
         unflattened/uncropped, unlike the MATLAB output above)
-      - 610 `layers/*.npy` (raw `(8, width)` boundary y-positions per B-scan; all-NaN where
-        unannotated)
+      - 610 `layers/*.npy` (raw `(8, width)` boundary y-positions per B-scan, from
+        `manualLayers1`; all-NaN where unannotated)
       - 110 of the 610 overlap with the annotated set above (11 per subject, centered on fovea);
         the other 500 have no layer annotation and are the reason this extraction is kept
-      - `labels_fluid1/2`, overlay PNGs, and `.npz` bundles that `BOE.py` also writes were
-        manually deleted; only raw images and layer boundaries are kept from dataset conversion.
+      - `labels_fluid1/2`, `overlays_fluid1/2`, `npz/`, and `splits/` that `BOE.py` also writes
+        are deleted immediately after the run (see `rm` above); only `images/`, `layers/`, and
+        `metadata.csv` are kept from dataset conversion.
   - **Raw extraction scope (HC-MS, via `generate_hc_train.m`)**
     - **script**: `external/oct_preprocess/Scripts/generate_hc_train.m`, from He et al.'s vendored
       `oct_preprocess` repo (see `docs/citation.md`). Run locally in MATLAB R2026a.

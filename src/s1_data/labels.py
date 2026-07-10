@@ -1,9 +1,13 @@
 """Boundary-to-mask conversion for layer segmentation ground truth.
 
-BOE.py saves layer ground truth as raw boundary coordinates (y-pixel row
-per A-scan column), not rasterized masks — see temp/BOE_usage.md. This
-fills between consecutive boundaries to produce per-layer binary masks.
+MATLAB-generated datasets (generate_dme_train.m, generate_hc_train.m) store
+layer ground truth as raw boundary coordinates (y-pixel row per A-scan column),
+not rasterized masks. This fills between consecutive boundaries to produce
+per-layer binary masks.
 """
+
+import json
+from pathlib import Path
 
 import numpy as np
 
@@ -33,14 +37,27 @@ def boundaries_to_layer_masks(boundaries, height):
     return masks
 
 
+def load_boundaries_json(label_path):
+    """Load boundaries from MATLAB-generated JSON label file.
+
+    Args:
+        label_path: path to label/*.txt (JSON file).
+    Returns:
+        (n_boundaries, width) array of y-row positions. Converts from
+        MATLAB 1-indexed to Python 0-indexed by subtracting 1.
+    """
+    with open(label_path) as f:
+        data = json.load(f)
+    boundaries = np.array(data["bds"], dtype=np.float64)
+    boundaries -= 1
+    return boundaries
+
+
 def is_annotated(boundaries):
     """
     True if at least one column has a full, non-NaN boundary set.
 
-    Needed because BOE.py writes a layers/*.npy for every B-scan, but Chiu
-    DME only hand-annotated 11 of 61 B-scans per subject — the other 50
-    are entirely NaN. Filtering on this is what takes OCTDataset from 610
-    slices down to the "110 annotated B-scans total" in
-    implementation_plan.md.
+    MATLAB-generated datasets always have complete annotations (no NaN),
+    so this always returns True. Kept for API compatibility.
     """
     return not np.isnan(boundaries).all()
