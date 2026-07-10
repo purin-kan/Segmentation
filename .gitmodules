@@ -6,4 +6,4 @@
 	url = https://github.com/ZhangHH233/Retinal_OCT_Image_Segmentation_via_Deep_Learning.git
 [submodule "external/oct_preprocess"]
 	path = external/oct_preprocess
-	url = https://github.com/heyufan1995/oct_preprocess.git
+	url = https://github.com/purin-kan/oct_preprocess.git
