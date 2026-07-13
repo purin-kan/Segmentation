@@ -14,7 +14,7 @@
     - **Strategy**: 5-fold cross-validation, stratified by group (DME / HC / MS).
     - Per-fold composition (~9 patients held out): 2 DME, ~3 HC, ~4 MS.
     - **Rationale**: DME has only 10 patients and just 110 annotated B-scans total. A single fixed test split would strand only 1–2 DME patients in test, too few for a stable Dice/MAD estimate
-- [ ] **Shared eval harness:** one data loader + inference + metrics call, reused by every
+- [x] **Shared eval harness:** one data loader + inference + metrics call, reused by every
       method below, so results are comparable on identical splits/preprocessing.
 - [x] **Preprocessing:**
   - **Raw extraction scope (DUKE-DME, via `generate_dme_train.m`)**: primary source, used for
