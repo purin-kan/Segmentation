@@ -14,11 +14,8 @@ def patient_folds(patients):
     Returns:
         list of N_FOLDS (train_patient_ids, val_patient_ids) sets.
 
-    Uses plain StratifiedKFold, not the group-aware StratifiedGroupKFold,
-    because each row here is already one whole patient (not one slice) —
-    the "patient-level split unit" from implementation_plan.md is
-    satisfied by construction, so there's no group of correlated rows to
-    keep together.
+    Uses plain StratifiedKFold: each row is already one patient, so
+    there's no group of correlated rows to keep together.
     """
     patient_ids = list(patients.keys())
     groups = [patients[p] for p in patient_ids]

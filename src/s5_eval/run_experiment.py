@@ -1,9 +1,9 @@
 """
-Shared eval harness: one data loader + inference + metrics call, reused by
-every method in src/s3_methods/ (implementation_plan.md, Setup).
+Shared eval harness, reused by every method in src/s3_methods/
+(implementation_plan.md, Setup).
 
-Meant to be imported into a Colab notebook cell, not run as a standalone
-CLI script — see src/notebooks/02_run_methods.ipynb.
+Imported into src/notebooks/02_run_methods.ipynb, not run as a
+standalone CLI script.
 """
 
 import csv

@@ -1,12 +1,9 @@
 """
-Region-based metrics (docs/implementation_plan.md, Setup > Metrics): Dice
-and IoU, computed per layer as a separate binary mask, then averaged
-across layers.
+Region metrics (docs/implementation_plan.md, Setup > Metrics): Dice and
+IoU, computed per layer, then averaged.
 
-Reuses external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/
-Region_based_metrics.py — dice_coefficient/iou_score are generic
-set-overlap formulas, so they apply unchanged to a single layer's binary
-mask.
+Reuses dice_coefficient/iou_score from
+external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/Region_based_metrics.py.
 """
 import os
 import sys

@@ -1,15 +1,11 @@
 """
-Boundary-based metrics (docs/implementation_plan.md, Setup > Metrics): MAD
-and RMSE, computed per boundary, then averaged across boundaries.
+Boundary metrics (docs/implementation_plan.md, Setup > Metrics): MAD and
+RMSE, computed per boundary, then averaged.
 
-Reuses:
-  - Contour_based_metrics.mad — mean(|y_true - y_pred|). This is a generic
-    elementwise formula: it is a boundary-localization error ONLY when
-    given 1D per-boundary row-position arrays (e.g. Chiu manualLayers1/2,
-    shape (num_boundaries, W, Z)) — feeding it 2D binarized masks instead
-    silently turns it back into a pixel-overlap metric (temp/AUDIT.md, B2).
-  - PixelError_based_metrics.root_mean_squared_error — same row-position
-    convention.
+Reuses Contour_based_metrics.mad and
+PixelError_based_metrics.root_mean_squared_error. Both expect 1D
+per-boundary row-position arrays, not 2D masks — feeding masks silently
+turns mad into a pixel-overlap metric instead (temp/AUDIT.md, B2).
 """
 import os
 import sys
