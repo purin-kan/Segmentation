@@ -16,7 +16,7 @@
     - **Rationale**: DME has only 10 patients and just 110 annotated B-scans total. A single fixed test split would strand only 1–2 DME patients in test, too few for a stable Dice/MAD estimate
 - [ ] **Shared eval harness:** one data loader + inference + metrics call, reused by every
       method below, so results are comparable on identical splits/preprocessing.
-- [ ] **Preprocessing:**
+- [x] **Preprocessing:**
   - **Raw extraction scope (DUKE-DME, via `generate_dme_train.m`)**: primary source, used for
     training/evaluation
     - **script**: `external/oct_preprocess/Scripts/generate_dme_train.m`, from He et al.'s vendored `oct_preprocess` repo (see `docs/citation.md`).

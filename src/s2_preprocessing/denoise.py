@@ -36,4 +36,6 @@ def estimate_sigma(bscan: np.ndarray, background_rows: int = 15) -> float:
     """
     noise_patch = bscan[:background_rows, :].astype(np.float32)
     noise_patch = noise_patch[noise_patch > 0]  # exclude black padding from flattening
+    if noise_patch.size == 0:
+        return 10 / 255  # no background to estimate from — fall back to default
     return np.std(noise_patch) / 255.0

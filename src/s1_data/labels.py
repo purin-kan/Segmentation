@@ -1,10 +1,4 @@
-"""Boundary-to-mask conversion for layer segmentation ground truth.
-
-MATLAB-generated datasets (generate_dme_train.m, generate_hc_train.m) store
-layer ground truth as raw boundary coordinates (y-pixel row per A-scan column),
-not rasterized masks. This fills between consecutive boundaries to produce
-per-layer binary masks.
-"""
+"""Boundary-to-mask conversion for layer segmentation ground truth."""
 
 import json
 from pathlib import Path
@@ -51,13 +45,3 @@ def load_boundaries_json(label_path: str | Path) -> np.ndarray:
     boundaries = np.array(data["bds"], dtype=np.float64)
     boundaries -= 1
     return boundaries
-
-
-def is_annotated(boundaries):
-    """
-    True if at least one column has a full, non-NaN boundary set.
-
-    MATLAB-generated datasets always have complete annotations (no NaN),
-    so this always returns True. Kept for API compatibility.
-    """
-    return not np.isnan(boundaries).all()
