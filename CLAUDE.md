@@ -12,6 +12,11 @@ The repo collects SOTA model implementations, evaluation metric code, and datase
 
 The root `README.md` is a general project overview. The in-progress implementation plan for a specific experiment (comparing traditional, graph-based, and deep-learning methods for retinal layer segmentation on DUKE-BOE) lives in `docs/implementation_plan.md` — check it for current task status/decisions before starting related work.
 
+## Working Style
+
+For research and data tasks, base answers on direct file inspection (read the actual files, folder
+keys, scripts) rather than assumptions before explaining structure or making recommendations.
+
 ## Nested repos — do not modify
 
 `external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/` and `external/Public-available-retinal-OCT-datasets/` are separate, independent git repos (own `.git`, own GitHub remotes under `ZhangHH233/`) checked in as gitlinks inside this repo. Do not edit, add, or commit files inside these two directories — treat them as read-only vendored upstream code. If a change is genuinely needed there, flag it to the user instead of editing directly.
@@ -131,9 +136,12 @@ Make changes directly in the main working checkout. Do not create or work in a g
 worktree for changes in this repo (background sessions have `worktree.bgIsolation` set
 to `none` in `.claude/settings.local.json` so direct edits are allowed).
 
-## Git Commit Conventions
+## Git & Version Control
 
 Do not add a `Co-Authored-By` / co-author tag to commit messages.
+
+When exploring open-ended problems (e.g., duplicate git commits), first summarize a plan and pause
+for confirmation instead of running many Bash commands in sequence.
 
 ## Domain Abbreviations
 

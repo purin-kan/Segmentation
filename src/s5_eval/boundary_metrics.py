@@ -14,6 +14,8 @@ Reuses:
 import os
 import sys
 
+import numpy as np
+
 _METRICS_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -43,4 +45,13 @@ def boundary_metrics(y_true_boundaries, y_pred_boundaries):
     Returns:
         dict with "mad" and "rmse", each the mean over boundaries.
     """
-    raise NotImplementedError
+    mad_scores = []
+    rmse_scores = []
+    for y_true, y_pred in zip(y_true_boundaries, y_pred_boundaries):
+        mad_scores.append(mad(y_true, y_pred))
+        rmse_scores.append(root_mean_squared_error(y_true, y_pred))
+
+    return {
+        "mad": float(np.mean(mad_scores)),
+        "rmse": float(np.mean(rmse_scores)),
+    }

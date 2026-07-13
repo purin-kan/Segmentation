@@ -6,6 +6,8 @@ Meant to be imported into a Colab notebook cell, not run as a standalone
 CLI script — see src/notebooks/02_run_methods.ipynb.
 """
 
+import csv
+
 from src.s5_eval.metrics import evaluate_method
 
 
@@ -26,4 +28,25 @@ def run_experiment(method_name, segment_fn, dataset, output_csv=None):
     Returns:
         (per_sample, summary) as returned by eval.metrics.evaluate_method.
     """
-    raise NotImplementedError
+    samples = []
+    for bscan, y_true_layers, y_true_boundaries in dataset:
+        y_pred_layers, y_pred_boundaries = segment_fn(bscan)
+        samples.append((y_true_layers, y_pred_layers, y_true_boundaries, y_pred_boundaries))
+
+    per_sample, summary = evaluate_method(samples)
+
+    if output_csv is not None:
+        metric_names = list(summary.keys())
+        with open(output_csv, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                ["method"]
+                + [f"{m}_mean" for m in metric_names]
+                + [f"{m}_std" for m in metric_names]
+            )
+            row = [method_name]
+            row += [summary[m]["mean"] for m in metric_names]
+            row += [summary[m]["std"] for m in metric_names]
+            writer.writerow(row)
+
+    return per_sample, summary

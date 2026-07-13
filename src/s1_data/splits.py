@@ -4,7 +4,7 @@
 from sklearn.model_selection import StratifiedKFold
 
 N_FOLDS = 5
-SEED = 0
+SEED = 42
 
 
 def patient_folds(patients):

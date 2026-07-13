@@ -73,6 +73,10 @@
     - Kim et al. (2026) the top and bottom of the image are vitreous and choroid, which contain no retinal layers, cropping to the 1/8–5/8 band focuses processing on the region that matters.
   - **Noise reduction** (BM3D)
     - BM3D used by https://opg.optica.org/boe/fulltext.cfm?uri=boe-5-10-3568
+  - **Normalization**
+    - percentile-clip + min-max
+      - clip 1st and 99th percentile to reduce effects of outliers (speckle noise)
+      - Normalize to [0,1]
   - ~~Contrast enhancement (CLAHE)~~ [experimental, scrapped]
     - Kim et al. state CLAHE's purpose is to enhance layer visibility through local rather than global contrast adjustment.
 

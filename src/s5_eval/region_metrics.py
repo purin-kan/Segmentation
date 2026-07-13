@@ -11,6 +11,8 @@ mask.
 import os
 import sys
 
+import numpy as np
+
 _METRICS_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -39,4 +41,13 @@ def region_metrics(y_true_layers, y_pred_layers):
     Returns:
         dict with "dice" and "iou", each the mean over layers.
     """
-    raise NotImplementedError
+    dice_scores = []
+    iou_scores = []
+    for y_true, y_pred in zip(y_true_layers, y_pred_layers):
+        dice_scores.append(dice_coefficient(y_true, y_pred))
+        iou_scores.append(iou_score(y_true, y_pred))
+
+    return {
+        "dice": float(np.mean(dice_scores)),
+        "iou": float(np.mean(iou_scores)),
+    }
