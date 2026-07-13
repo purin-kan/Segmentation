@@ -5,7 +5,8 @@ implementation_plan.md, To Be Decided: DL methods need this postprocessing
 step to be compared fairly against Graph Search/DP/Graph-Cut, which
 enforce non-crossing boundaries inherently.
 """
+import numpy as np
 
 
-def enforce_non_crossing(boundaries):
+def enforce_non_crossing(boundaries: np.ndarray) -> np.ndarray:
     raise NotImplementedError

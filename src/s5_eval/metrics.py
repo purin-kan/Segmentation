@@ -5,6 +5,8 @@ boundary (boundary_metrics.py). Aggregates per-sample scores into
 per-method summaries, optionally as CSV.
 """
 import csv
+from collections.abc import Sequence, Iterable
+from pathlib import Path
 
 import numpy as np
 
@@ -12,7 +14,7 @@ from src.s5_eval.region_metrics import region_metrics
 from src.s5_eval.boundary_metrics import boundary_metrics
 
 
-def compute_metrics(y_true_layers, y_pred_layers, y_true_boundaries, y_pred_boundaries):
+def compute_metrics(y_true_layers: Sequence[np.ndarray], y_pred_layers: Sequence[np.ndarray], y_true_boundaries: Sequence[np.ndarray], y_pred_boundaries: Sequence[np.ndarray]) -> dict[str, float]:
     """
     Compute the four chosen metrics for one sample.
 
@@ -30,7 +32,7 @@ def compute_metrics(y_true_layers, y_pred_layers, y_true_boundaries, y_pred_boun
     return results
 
 
-def evaluate_method(samples):
+def evaluate_method(samples: Iterable[tuple[Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray]]]) -> tuple[list[dict[str, float]], dict[str, dict[str, float]]]:
     """
     Run compute_metrics over every sample of one method's test set.
 
@@ -52,7 +54,7 @@ def evaluate_method(samples):
     return per_sample, summary
 
 
-def compare_methods(methods, output_csv=None):
+def compare_methods(methods: dict[str, Iterable[tuple[Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray]]]], output_csv: str | Path | None = None) -> dict[str, dict[str, dict[str, float]]]:
     """
     Summarize and optionally save a metric comparison table across methods.
 

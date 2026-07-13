@@ -9,6 +9,7 @@ turns mad into a pixel-overlap metric instead (temp/AUDIT.md, B2).
 """
 import os
 import sys
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -28,7 +29,7 @@ from Contour_based_metrics import mad  # noqa: E402
 from PixelError_based_metrics import root_mean_squared_error  # noqa: E402
 
 
-def boundary_metrics(y_true_boundaries, y_pred_boundaries):
+def boundary_metrics(y_true_boundaries: Sequence[np.ndarray], y_pred_boundaries: Sequence[np.ndarray]) -> dict[str, float]:
     """
     Compute MAD and RMSE per boundary (row position per A-scan column),
     then average across boundaries.

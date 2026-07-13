@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 
-def boundaries_to_layer_masks(boundaries, height):
+def boundaries_to_layer_masks(boundaries: np.ndarray, height: int) -> np.ndarray:
     """
     Args:
         boundaries: (n_boundaries, width) array of y-row positions: layer k
@@ -37,7 +37,7 @@ def boundaries_to_layer_masks(boundaries, height):
     return masks
 
 
-def load_boundaries_json(label_path):
+def load_boundaries_json(label_path: str | Path) -> np.ndarray:
     """Load boundaries from MATLAB-generated JSON label file.
 
     Args:

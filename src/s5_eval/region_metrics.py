@@ -7,6 +7,7 @@ external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/Region_based_m
 """
 import os
 import sys
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -25,7 +26,7 @@ sys.path.insert(0, _METRICS_DIR)
 from Region_based_metrics import dice_coefficient, iou_score  # noqa: E402
 
 
-def region_metrics(y_true_layers, y_pred_layers):
+def region_metrics(y_true_layers: Sequence[np.ndarray], y_pred_layers: Sequence[np.ndarray]) -> dict[str, float]:
     """
     Compute Dice and IoU per layer, then average across layers.
 

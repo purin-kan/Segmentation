@@ -7,7 +7,7 @@ N_FOLDS = 5
 SEED = 42
 
 
-def patient_folds(patients):
+def patient_folds(patients: dict[str, str]) -> list[tuple[set[str], set[str]]]:
     """
     Args:
         patients: dict of {patient_id: group}, group one of 'DME'/'HC'/'MS'.

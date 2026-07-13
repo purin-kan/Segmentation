@@ -7,11 +7,15 @@ standalone CLI script.
 """
 
 import csv
+from collections.abc import Callable, Iterable
+from pathlib import Path
+
+import numpy as np
 
 from src.s5_eval.metrics import evaluate_method
 
 
-def run_experiment(method_name, segment_fn, dataset, output_csv=None):
+def run_experiment(method_name: str, segment_fn: Callable[..., tuple[np.ndarray, np.ndarray]], dataset: Iterable[tuple[np.ndarray, np.ndarray, np.ndarray]], output_csv: str | Path | None = None) -> tuple[list[dict[str, float]], dict[str, dict[str, float]]]:
     """
     Run one method's segment_fn over every sample in dataset, then score it
     with the four metrics in implementation_plan.md (Setup > Metrics):

@@ -6,7 +6,7 @@ import numpy as np
 import bm3d # type: ignore
 
 
-def denoise(bscan, sigma=10/255):
+def denoise(bscan: np.ndarray, sigma: float = 10/255) -> np.ndarray:
     """Denoise a single B-scan with BM3D.
 
     bscan: grayscale image as a uint8 or float array (any range).
@@ -25,7 +25,7 @@ def denoise(bscan, sigma=10/255):
     return (denoised * 255).astype(np.uint8)
 
 
-def estimate_sigma(bscan, background_rows=15):
+def estimate_sigma(bscan: np.ndarray, background_rows: int = 15) -> float:
     """Estimate BM3D's sigma_psd from a B-scan's noise-only background band.
 
     bscan: grayscale image as a uint8 or float array (any range).

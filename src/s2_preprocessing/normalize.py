@@ -5,7 +5,7 @@ Intensity normalization (implementation_plan.md, Setup > Preprocessing).
 import numpy as np
 
 
-def normalize(bscan, lo_pct=1, hi_pct=99):
+def normalize(bscan: np.ndarray, lo_pct: float = 1, hi_pct: float = 99) -> np.ndarray:
     """Normalize a single B-scan via percentile clipping and min-max scaling.
 
     bscan: grayscale image as a uint8 or float array (any range).
