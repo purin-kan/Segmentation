@@ -13,7 +13,12 @@ from src.s2_preprocessing.normalize import normalize
 
 
 def preprocess(bscan: np.ndarray) -> np.ndarray:
-    return normalize(denoise(bscan, sigma=estimate_sigma(bscan)))
+    """Denoise + normalize to [0, 1], then re-quantize to uint8 for storage —
+    the signal has no more than 8 bits of real precision after BM3D anyway
+    (denoise() already rounds to uint8 internally); OCTDataset expands back
+    to float32 [0, 1] at load time."""
+    normalized = normalize(denoise(bscan, sigma=estimate_sigma(bscan)))
+    return np.clip(normalized * 255, 0, 255).round().astype(np.uint8)
 
 
 def _preprocess_one(image_path: Path, label_path: Path, image_dir: Path, label_dir: Path) -> None:

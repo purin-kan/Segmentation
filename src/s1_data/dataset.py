@@ -2,7 +2,10 @@
 
 Reads the denoised+normalized output of 01_preprocessing.ipynb
 (data/processed/{duke_dme,hc_ms}_denoised):
-  - image/*.npy: B-scan images (flattened+cropped, denoised, normalized to [0, 1])
+  - image/*.npy: B-scan images (flattened+cropped, denoised, normalized to
+    [0, 1], stored as uint8 — the signal has no more than 8 bits of real
+    precision after BM3D, so OCTDataset expands back to float32 [0, 1] at
+    load time rather than storing the float result directly)
   - label/*.txt: JSON boundary annotations
 
 01_preprocessing.ipynb reads the raw MATLAB output (generate_dme_train.m,
@@ -66,7 +69,7 @@ class OCTDataset:
 
     def __getitem__(self, idx: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         sample = self.samples[idx]
-        image = np.load(sample["image_path"])
+        image = np.load(sample["image_path"]).astype(np.float32) / 255.0
         boundaries = sample["boundaries"]
         layer_masks = boundaries_to_layer_masks(boundaries, height=image.shape[0])
         return image, layer_masks, boundaries

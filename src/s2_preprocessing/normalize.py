@@ -19,4 +19,4 @@ def normalize(bscan: np.ndarray, lo_pct: float = 1, hi_pct: float = 99) -> np.nd
     clipped = np.clip(img_float, lo, hi)
     normalizedScan = (clipped - lo) / (hi - lo)
 
-    return normalizedScan
+    return normalizedScan.astype(np.float32)
