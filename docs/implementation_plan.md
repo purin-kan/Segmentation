@@ -146,15 +146,13 @@
   - ~~Contrast enhancement (CLAHE)~~ [experimental, scrapped]
     - Kim et al. state CLAHE's purpose is to enhance layer visibility through local rather than global contrast adjustment.
 
-- [ ] **Metrics:** reuse `external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/`.
+- [x] **Metrics:** reuse `external/Retinal_OCT_Image_Segmentation_via_Deep_Learning/Metrics/`.
   - Region: Dice, IoU [computed per layer as a separate binary mask, then averaged]
   - Boundary: MAD, RMSE [computed per boundary, then averaged]
-  - **MAD is the headline metric; Dice is supporting.** Dice scales with layer thickness, so the
-    thick composite layer 5 scores high regardless of method. MAD measures boundary displacement
-    directly and is unaffected.
-  - **Report per-layer and per-boundary, not just the aggregate.** Aggregate scores are not
-    comparable to published baselines, which average over a different set of layers/boundaries.
-    The per-layer and per-boundary numbers are.
+    - **MAD is the headline metric; Dice is supporting.** Dice scales with layer thickness, so the
+    thick composite layer 5 scores high regardless of method. MAD measures boundary displacement directly and is unaffected.
+    - **Coverage** fraction of annotated columns a method actually predicts (non-NaN),
+    per boundary then averaged. A method may not be able to resolve a prediction.
 
 ### To Be Decided
 
