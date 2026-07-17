@@ -50,6 +50,8 @@ def evaluate_method(samples: Iterable[tuple[Sequence[np.ndarray], Sequence[np.nd
         with NaNs ignored.
     """
     per_sample = [compute_metrics(*sample) for sample in samples]
+    if not per_sample:
+        raise ValueError("No samples to evaluate: the dataset/split yielded zero B-scans.")
 
     summary = {}
     for name in per_sample[0]:
