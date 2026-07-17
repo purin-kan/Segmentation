@@ -8,16 +8,19 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from src.s2_preprocessing.denoise import denoise, estimate_sigma
+from src.s2_preprocessing.denoise import SIGMA_SCALE, denoise, estimate_sigma
 from src.s2_preprocessing.normalize import normalize
 
 
-def preprocess(bscan: np.ndarray) -> np.ndarray:
+def preprocess(bscan: np.ndarray, sigma_scale: float = SIGMA_SCALE) -> np.ndarray:
     """Denoise + normalize to [0, 1], then re-quantize to uint8 for storage —
     the signal has no more than 8 bits of real precision after BM3D anyway
     (denoise() already rounds to uint8 internally); OCTDataset expands back
-    to float32 [0, 1] at load time."""
-    normalized = normalize(denoise(bscan, sigma=estimate_sigma(bscan)))
+    to float32 [0, 1] at load time.
+
+    sigma_scale multiplies the per-B-scan sigma estimate; see denoise.SIGMA_SCALE.
+    """
+    normalized = normalize(denoise(bscan, sigma=estimate_sigma(bscan) * sigma_scale))
     return np.clip(normalized * 255, 0, 255).round().astype(np.uint8)
 
 

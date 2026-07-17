@@ -5,6 +5,13 @@ Speckle noise reduction with BM3D (implementation_plan.md, Setup > Preprocessing
 import numpy as np
 import bm3d # type: ignore
 
+# estimate_sigma reads the signal-free vitreous, but OCT speckle is
+# multiplicative, so noise inside retinal tissue is stronger than the
+# background it measures. Scale the estimate up to compensate. 2.5 chosen from
+# a 1x-6x sweep on DUKE-DME Subject_01_1: 1x leaves visible speckle, >=4x
+# smears the ~6px INL and ~8px OPL.
+SIGMA_SCALE = 2.5
+
 
 def denoise(bscan: np.ndarray, sigma: float = 10/255) -> np.ndarray:
     """Denoise a single B-scan with BM3D.
