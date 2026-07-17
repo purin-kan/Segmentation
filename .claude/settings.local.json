@@ -3,6 +3,8 @@
     "allow": [
       "Bash(git ls-tree *)",
       "Bash(git submodule *)",
+      "Bash(source venv/bin/activate && python -m py_compile *)",
+      "Bash(source venv/bin/activate && python -m compileall *)",
       "WebSearch"
     ]
   }
