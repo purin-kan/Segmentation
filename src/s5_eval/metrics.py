@@ -10,13 +10,15 @@ from pathlib import Path
 
 import numpy as np
 
+from src.s1_data.labels import annotated_columns_per_layer
 from src.s5_eval.region_metrics import region_metrics
 from src.s5_eval.boundary_metrics import boundary_metrics
 
 
 def compute_metrics(y_true_layers: Sequence[np.ndarray], y_pred_layers: Sequence[np.ndarray], y_true_boundaries: Sequence[np.ndarray], y_pred_boundaries: Sequence[np.ndarray]) -> dict[str, float]:
     """
-    Compute the four chosen metrics for one sample.
+    Compute the four chosen metrics for one sample, scored only where the
+    ground truth is annotated (DUKE-DME leaves ~31% of columns unlabeled).
 
     Args:
         y_true_layers, y_pred_layers: per-layer binary masks — see
@@ -24,10 +26,13 @@ def compute_metrics(y_true_layers: Sequence[np.ndarray], y_pred_layers: Sequence
         y_true_boundaries, y_pred_boundaries: per-boundary row positions —
             see boundary_metrics.boundary_metrics.
     Returns:
-        dict with "dice", "iou", "mad", "rmse".
+        dict with "dice", "iou", "mad", "rmse" (means), plus a per-layer or
+        per-boundary breakdown of each.
     """
+    valid_columns = annotated_columns_per_layer(np.asarray(y_true_boundaries, dtype=float))
+
     results = {}
-    results.update(region_metrics(y_true_layers, y_pred_layers))
+    results.update(region_metrics(y_true_layers, y_pred_layers, valid_columns=valid_columns))
     results.update(boundary_metrics(y_true_boundaries, y_pred_boundaries))
     return results
 
