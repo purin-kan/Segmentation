@@ -5,6 +5,59 @@ from pathlib import Path
 
 import numpy as np
 
+# The 6-boundary/5-layer harmonized scheme (implementation_plan.md,
+# Setup > label harmonization). Keyed by each dataset's native boundary
+# count, which identifies it unambiguously: DUKE-DME ships 8, HC-MS 9.
+HARMONIZED_INDICES = {
+    8: [0, 1, 2, 3, 4, 7],  # DUKE-DME: drops ONL-ISM/ISE, ISE/OS-RPE
+    9: [0, 1, 2, 3, 4, 8],  # HC-MS: drops ELM, IS-OS, OS-RPE
+}
+
+HARMONIZED_BOUNDARY_NAMES = ("ILM", "RNFL/GCL", "IPL/INL", "INL/OPL", "OPL/ONL", "BM")
+HARMONIZED_LAYER_NAMES = ("RNFL", "GCL+IPL", "INL", "OPL", "ONL-BM")
+
+N_HARMONIZED_BOUNDARIES = len(HARMONIZED_BOUNDARY_NAMES)
+
+
+def harmonize_boundaries(boundaries: np.ndarray) -> np.ndarray:
+    """Reduce a dataset's native boundaries to the shared 6.
+
+    Args:
+        boundaries: (n_boundaries, width) array, 8 rows for DUKE-DME or 9 for
+            HC-MS. Already-harmonized (6-row) input is returned unchanged.
+    Returns:
+        (6, width) array ordered as HARMONIZED_BOUNDARY_NAMES.
+    Raises:
+        ValueError: on any other boundary count.
+    """
+    n_boundaries = boundaries.shape[0]
+    if n_boundaries == N_HARMONIZED_BOUNDARIES:
+        return boundaries
+    if n_boundaries not in HARMONIZED_INDICES:
+        raise ValueError(
+            f"Expected {sorted(HARMONIZED_INDICES)} or {N_HARMONIZED_BOUNDARIES} "
+            f"boundaries, got {n_boundaries}."
+        )
+    return boundaries[HARMONIZED_INDICES[n_boundaries]]
+
+
+def annotated_columns_per_layer(boundaries: np.ndarray) -> np.ndarray:
+    """Columns where a layer has ground truth, i.e. both bounding boundaries
+    are annotated. Same layer order as boundaries_to_layer_masks.
+
+    Validity is per layer, not global: DUKE-DME's OPL/ONL is annotated over
+    fewer columns than its other boundaries, so the layers it bounds have a
+    smaller valid set.
+
+    Args:
+        boundaries: (n_boundaries, width) array of y-row positions, NaN where
+            unannotated.
+    Returns:
+        (n_boundaries - 1, width) bool array.
+    """
+    annotated = ~np.isnan(boundaries)
+    return annotated[:-1] & annotated[1:]
+
 
 def boundaries_to_layer_masks(boundaries: np.ndarray, height: int) -> np.ndarray:
     """

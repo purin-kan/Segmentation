@@ -20,7 +20,7 @@ from typing import Any
 
 import numpy as np
 
-from src.s1_data.labels import boundaries_to_layer_masks, load_boundaries_json
+from src.s1_data.labels import boundaries_to_layer_masks, harmonize_boundaries, load_boundaries_json
 
 class OCTDataset:
     """One sample = one annotated B-scan: (image, layer_masks, boundaries).
@@ -29,15 +29,23 @@ class OCTDataset:
 
     Expects directory structure with image/*.npy and label/*.txt (JSON).
     Label filenames must match image filenames (except extension).
+
+    Boundaries are harmonized to the shared 6 at load time, so both datasets
+    yield 6 boundaries / 5 layer masks. The label files keep their native 8
+    (DUKE-DME) or 9 (HC-MS); nothing on disk is rewritten.
     """
 
-    def __init__(self, result_dir: str | Path, patient_ids: Iterable[str] | None = None) -> None:
+    def __init__(self, result_dir: str | Path, patient_ids: Iterable[str] | None = None, harmonize: bool = True) -> None:
         """
         Args:
             result_dir: path to directory containing {image,label}/ subdirs.
             patient_ids: if provided, only load samples matching these IDs.
+            harmonize: reduce boundaries to the shared 6 (labels.py,
+                HARMONIZED_INDICES). Set False to get the dataset's native
+                boundaries, e.g. for inspection.
         """
         self.result_dir = Path(result_dir)
+        self.harmonize = harmonize
         self.samples = self._load_samples(patient_ids)
 
     def _load_samples(self, patient_ids: Iterable[str] | None) -> list[dict[str, Any]]:
@@ -56,6 +64,8 @@ class OCTDataset:
                 continue
 
             boundaries = load_boundaries_json(label_path)
+            if self.harmonize:
+                boundaries = harmonize_boundaries(boundaries)
             samples.append({
                 "subject_id": subject_id,
                 "image_path": image_path,
