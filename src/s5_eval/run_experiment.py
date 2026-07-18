@@ -27,7 +27,8 @@ def run_experiment(method_name: str, segment_fn: Callable[..., tuple[np.ndarray,
             and per-boundary positions, matching the segment()/forward()
             signature of the src/s3_methods/* stubs.
         dataset: iterable of (bscan, y_true_layers, y_true_boundaries)
-            samples, typically a src.s1_data.dataset.OCTDataset test split.
+            samples, typically a src.s1_data.dataset.OCTDataset restricted to
+            one CV fold's held-out patients.
         output_csv: optional path to save the per-method metrics summary.
     Returns:
         (per_sample, summary) as returned by eval.metrics.evaluate_method.
