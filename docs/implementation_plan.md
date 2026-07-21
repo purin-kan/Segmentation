@@ -309,3 +309,53 @@ additive: implementing any of them extends the comparison without changing the e
 | 5a | CNN | Deep Learning | Low | Subsumed by 5b, which is 5a plus a graph pass. 5d covers the no-topology DL baseline |
 | 5g | Swin Transformer (Swin-UNet) | Deep Learning | Low | No vendored starting point anywhere in `external/`, so the highest implementation cost on the list for a result confounded by the same data scarcity as 5f |
 | 5h | 2.5D | Deep Learning | Low | Already marked beyond scope. No vendored file stacks multi-slice input, and the only retinal-layer-specific reference is a 2026 preprint |
+
+## Presentation scope
+
+Three states, kept distinct in the write-up:
+
+| State | Methods | Treatment |
+| - | - | - |
+| Implemented and measured | the 6 in the Methods table | the only numbers this study produces |
+| Cut but covered | every Deep Learning entry above (5a, 5c, 5e, 5f, 5g, 5h) | architecture explained, published performance given as context for what was foregone |
+| Listed only | the non-DL cuts (1b, 3a, 3b) | named as future work, not presented |
+
+**Published numbers never share a table with measured ones.** Four protocol differences stack, and
+any one alone breaks comparability:
+
+- label scheme: 6 boundaries / 5 layers here, against the native 7-9 layer schemes those papers report
+- split: 5-fold CV over 45 patients here, against their fixed train/test subject splits
+- data pool: DUKE-DME + HC-MS pooled here, single-dataset there
+- preprocessing: the flatten/crop/BM3D chain here is not theirs
+
+Put them in a separate block, state each one's protocol (dataset, split, layer count), and label
+them published rather than measured.
+
+**Grounding differs by method.** What is in `external/` bounds what can be claimed:
+
+| # | Method | Vendored code | Paper citation | Published numbers |
+| - | - | - | - | - |
+| 5c | ReLayNet | `Lesions_Segment/ReLayNet_2017.py` | full BibTeX (Roy et al. 2017, BOE) | usable, see below |
+| 5e | SD_Layer_Net | `Layers_Segment/SD_Layer_Net/` | none in repo | not without identifying the source paper first |
+| 5a | CNN | none | n/a | generic architecture, no single result to quote |
+| 5f | TransUNet | none | n/a | literature only |
+| 5g | Swin-UNet | none | n/a | literature only |
+| 5h | 2.5D | none | n/a | literature only; the only retinal-layer reference is a 2026 preprint |
+
+No vendored TransUNet, Swin, ViT or 2.5D exists anywhere in `external/`. The name list in
+`src/s3_methods/m5_deep_learning/` describes intended scope, not available code.
+
+**The one defensible cross-reference.** ReLayNet was published on DUKE-DME (Chiu 2015), the same
+data as half this pool, and reports per-layer Dice. Its per-layer Dice on RNFL, GCL+IPL, INL and
+OPL against the Duke-only subset of this study's results compares the same quantity on the same
+data, which is the comparability carve-out in Setup > Comparability. Still confounded by split and
+preprocessing, so label it indicative, not controlled, and verify their split from the paper before
+quoting. No other cut method supports even this much.
+
+**Describe 5e accurately if presented.** "Boundary-Aware U-Net" undersells the vendored code: an
+SDNet-style disentangled representation (separate anatomy and modality encoders, FiLM conditioning)
+over an attention U-Net, plus a `LayerEngine` doing column-wise soft position regression with
+Sobel/Laplacian kernels along the depth axis under a curvature-max constraint. That engine is a
+differentiable form of the same structural prior `s4_postprocessing/ordering.py` applies post hoc,
+which is the comparison worth drawing. `LayerEngine.__init__` also hardcodes `.cuda()` on its
+kernels, a concrete instance of the adaptation cost that drove the cut.
