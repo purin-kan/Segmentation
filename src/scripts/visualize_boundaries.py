@@ -2,8 +2,8 @@
 src/s2_preprocessing/ output.
 
 Runs locally against data/processed/{duke_dme,hc_ms}_denoised (or the DATA_ROOT
-equivalent) — the output of src/notebooks/01_preprocessing.ipynb. Not a Colab
-notebook step; see src/scripts/README.md.
+equivalent) — the output of src/notebooks/01_preprocessing.ipynb. Not a notebook
+step and not a Modal step; see src/scripts/README.md.
 
 Edit the config block below, then run:
     python src/scripts/visualize_boundaries.py

@@ -12,6 +12,9 @@ SimpleITK
 matplotlib
 bm3d
 
+# Compute
+modal
+
 # Deep learning
 torch
 torchvision

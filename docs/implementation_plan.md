@@ -206,7 +206,11 @@ coverage and high MAD on the four low-contrast inner boundaries.
 **Scope cuts.** Cut from 8 methods to 6 under a 5-day budget. The binding constraint is GPU hours,
 not implementation time: 4 DL methods x 5 folds x 3 seeds is ~60 training runs, and at roughly
 1.5-2 h per run (~1,460 training B-scans, 224x1024 canvas, ~50 epochs to early stopping) that is
-100+ GPU-hours on an ephemeral Colab runtime. 2 DL methods x 5 folds x 1 seed is ~18.
+100+ GPU-hours. 2 DL methods x 5 folds x 1 seed is ~18.
+
+Running on Modal changes what that number costs but not what it is. Folds run concurrently, so
+the budget binds on total GPU-hours billed rather than on wall-clock, and the cut stands
+on the same arithmetic.
 
 5c and 5e are the cuts, both recorded in Future Work as time rather than merit. Every family keeps
 a representative and the 5b-vs-5d ablation survives, so the comparison still answers its question
@@ -274,7 +278,9 @@ claim (5b vs 5d above all) sit inside the 6/6 tier, where ranking reduces to pla
 
 **Order.** Stage 0: one fold, one seed, all 6 methods, to shake out adapters/padding/CSV plumbing
 (report nothing). Run it before anything else: it converts the compute estimate below into a real
-per-epoch number and catches adapter bugs before they waste an overnight training run. Stage 1:
+per-epoch number and catches adapter bugs before they waste an overnight training run. It also
+sets the GPU type: `modal_app.benchmark_gpus()` times a short run on each candidate, and
+`DEFAULT_GPU` is set from that measurement rather than an estimate. Stage 1:
 classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and sets the baseline floor.
 These methods are deterministic and run no training loop, so Stage 1 de-risks the data/metrics/CSV
 path only. Stage 2: DL (5d, then 5b). 5d first: it is 5b's pinned backbone, and it is where the
@@ -287,7 +293,11 @@ It is the one item worth reordering the schedule around.
 Stage 1 must land before the Ranking thresholds can be set: the coverage floor and MAD bound come
 from the classical methods' observed distributions.
 
-**Run mechanics.** Checkpoint per fold to Drive (Colab runtimes are ephemeral). Write one CSV row
+**Run mechanics.** Training and DL scoring run on Modal (`src/modal_app.py`); the classical
+methods run locally. Folds fan out to concurrent containers via `.starmap()`, so a 5-fold sweep
+costs roughly one run of wall-clock rather than five. Checkpoint per fold to the
+`segmentation-data` Volume, which is also where the CSVs land and what
+`modal volume get` pulls down. Write one CSV row
 per (method, fold, seed, patient): `run_experiment.py` currently collapses to one row per method,
 and `OCTDataset.__getitem__` does not return `subject_id` at all, so patient identity has to be
 threaded through before the paired differences can be computed. If economizing, cut seeds before
