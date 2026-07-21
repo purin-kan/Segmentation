@@ -7,6 +7,7 @@ per-method summaries, optionally as CSV.
 import csv
 from collections.abc import Sequence, Iterable
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -56,9 +57,58 @@ def evaluate_method(samples: Iterable[tuple[Sequence[np.ndarray], Sequence[np.nd
     summary = {}
     for name in per_sample[0]:
         values = np.array([sample[name] for sample in per_sample], dtype=float)
-        summary[name] = {"mean": np.nanmean(values), "std": np.nanstd(values)}
+        # A boundary every method declines is all-NaN here, which is expected
+        # for 1a/2/4 rather than exceptional, so report NaN instead of letting
+        # nanmean/nanstd warn on every run.
+        if np.isnan(values).all():
+            summary[name] = {"mean": float("nan"), "std": float("nan")}
+        else:
+            summary[name] = {"mean": float(np.nanmean(values)), "std": float(np.nanstd(values))}
 
     return per_sample, summary
+
+
+def aggregate_per_patient(subject_ids: Sequence[str], per_sample: Sequence[dict[str, float]]) -> list[dict[str, Any]]:
+    """Average per-B-scan metrics within each patient.
+
+    The comparison unit is the patient, not the B-scan (implementation_plan.md,
+    Evaluation > Comparison): B-scans within a patient are correlated slices of
+    the same eye, and each patient is held out in exactly one fold, so one row
+    per patient per method double-counts nothing.
+
+    Patients contribute equally regardless of B-scan count (Duke 11, HC-MS 49),
+    which is deliberate: it keeps HC-MS volume from dominating the mean.
+
+    Args:
+        subject_ids: patient id per entry of per_sample, same order.
+        per_sample: per-B-scan metric dicts, as returned by evaluate_method.
+    Returns:
+        list of {"subject_id", "n_bscans", <metric>: mean, ...}, one row per
+        patient, ordered by subject_id. A metric that is NaN on every B-scan of
+        a patient stays NaN rather than raising.
+    """
+    if len(subject_ids) != len(per_sample):
+        raise ValueError(
+            f"subject_ids and per_sample must line up: got {len(subject_ids)} ids "
+            f"for {len(per_sample)} scored B-scans."
+        )
+    if not per_sample:
+        return []
+
+    by_patient: dict[str, list[dict[str, float]]] = {}
+    for subject_id, sample in zip(subject_ids, per_sample):
+        by_patient.setdefault(subject_id, []).append(sample)
+
+    metric_names = list(per_sample[0])
+    rows = []
+    for subject_id in sorted(by_patient):
+        patient_samples = by_patient[subject_id]
+        row: dict[str, Any] = {"subject_id": subject_id, "n_bscans": len(patient_samples)}
+        for name in metric_names:
+            values = np.array([sample[name] for sample in patient_samples], dtype=float)
+            row[name] = float("nan") if np.isnan(values).all() else float(np.nanmean(values))
+        rows.append(row)
+    return rows
 
 
 def compare_methods(methods: dict[str, Iterable[tuple[Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray]]]], output_csv: str | Path | None = None) -> dict[str, dict[str, dict[str, float]]]:

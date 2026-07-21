@@ -14,7 +14,7 @@ not through this class — by design, every OCTDataset-visible sample has
 already gone through denoise+normalize.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -114,6 +114,25 @@ def load_fold_datasets(result_dirs: Iterable[str | Path], patient_ids: Iterable[
         OCTDataset(result_dir, patient_ids=requested & available[result_dir], harmonize=harmonize)
         for result_dir in result_dirs
     ]
+
+
+def iter_samples(datasets: Iterable["OCTDataset"]) -> Iterator[tuple[str, np.ndarray, np.ndarray, np.ndarray]]:
+    """Iterate several OCTDatasets as one stream, carrying patient identity.
+
+    The eval-side replacement for itertools.chain(*load_fold_datasets(...)).
+    Chaining drops each dataset's .samples, so a metric row computed
+    downstream can no longer be traced back to a patient, and the per-patient
+    pairing in implementation_plan.md (Evaluation > Comparison) needs it.
+    Training does not, and keeps using __getitem__ directly.
+
+    Args:
+        datasets: OCTDatasets to read in order, e.g. load_fold_datasets(...).
+    Yields:
+        (subject_id, image, layer_masks, boundaries) per B-scan.
+    """
+    for dataset in datasets:
+        for idx in range(len(dataset)):
+            yield (dataset.samples[idx]["subject_id"], *dataset[idx])
 
 
 class OCTDataset:
