@@ -1,46 +1,72 @@
 # src/scripts/ — local-machine helpers
 
-Local side of the Google Drive relay. The Colab VM (`src/notebooks/*.ipynb`) is ephemeral and
-can't write to local disk, so results pass through Drive; these scripts pull them onto the local
-machine and clear the Drive copy.
+Scripts that run on your own machine, not in a Modal container and not as a notebook step.
 
-```
-Colab VM ──writes──▶ Google Drive ──pull + delete──▶ local machine
-OUTPUT_ROOT           MyDrive/Segmentation/output    src/scripts/pull_from_drive.py
-```
+| Script | Purpose |
+|--------|---------|
+| `visualize_boundaries.py` | Overlay boundary annotations onto denoised B-scans, for visual QA |
+| `visualize_masks.py`      | Rasterize per-layer masks from boundary labels and save them as viewable label maps |
 
-## Files
-
-| Script | Platform | Purpose |
-|--------|----------|---------|
-| `setup_rclone.sh`    | macOS/Linux | One-time rclone install + `gdrive` remote |
-| `setup_rclone.ps1`   | Windows     | Same, via PowerShell |
-| `pull_from_drive.py` | any         | `Segmentation/output` → local `output/`, deletes the Drive copy |
-
-## Setup
+Both read `data/processed/{duke_dme,hc_ms}_denoised`. Edit the config block at the top of each,
+then run it:
 
 ```bash
-src/scripts/setup_rclone.sh                                              # macOS/Linux
-powershell -ExecutionPolicy Bypass -File src\scripts\setup_rclone.ps1    # Windows
+python src/scripts/visualize_boundaries.py
+python src/scripts/visualize_masks.py
 ```
 
-Creates an rclone remote named `gdrive` with full `drive` scope — `drive.file` scope can't see
-files Colab created rather than rclone itself.
+## Moving data to and from Modal
 
-## Usage
+DL training and scoring run on Modal against the `segmentation-data` Volume
+(`src/modal_app.py`), so inputs have to be uploaded once and results pulled back down. The
+`modal` CLI does both.
+
+```
+local data/processed/ ──put──▶ Volume /data/processed ──▶ containers ──▶ Volume /output ──get──▶ local output/
+```
+
+Create the Volume once. `modal_app.py` passes `create_if_missing=True`, but that only takes
+effect when the app runs; the `modal volume` CLI needs it to exist already:
 
 ```bash
-python src/scripts/pull_from_drive.py            # Segmentation/output -> output/
-python src/scripts/pull_from_drive.py processed  # other subfolder
-python src/scripts/pull_from_drive.py --yes      # skip confirmation
+modal volume create segmentation-data
 ```
 
-`rclone move`: checksum-verifies each file before deleting the Drive copy, dry-runs first, prompts
-for confirmation unless `--yes`. Deletions land in Drive trash (~30 days).
+Seed it with preprocessed data (once, and again whenever preprocessing changes). Only the
+denoised directories and `folds.json` are read by `modal_app.py`; the pre-denoise
+`duke_dme/` and `hc_ms/` stay local:
+
+```bash
+modal volume put segmentation-data data/processed/duke_dme_denoised /data/processed/duke_dme_denoised
+modal volume put segmentation-data data/processed/hc_ms_denoised   /data/processed/hc_ms_denoised
+modal volume put segmentation-data data/processed/folds.json       /data/processed/folds.json
+```
+
+Pull results down:
+
+```bash
+modal volume get segmentation-data /output ./output
+```
+
+Inspect without downloading:
+
+```bash
+modal volume ls segmentation-data /output
+```
+
+`modal volume get` copies rather than moves, so the Volume keeps its copy. Remove it explicitly
+when you no longer need it:
+
+```bash
+modal volume rm segmentation-data /output/<file>
+```
 
 ## Path invariant
 
-`Segmentation/output` is defined in three places, kept in sync manually:
-- `00_setup.ipynb`: `OUTPUT_ROOT`
-- `pull_from_drive.py`: `--drive-base` / subpath defaults
-- the Drive folder itself
+The Volume paths are defined in two places, kept in sync manually:
+
+- `src/modal_app.py`: `DATA_ROOT` / `OUTPUT_ROOT` (`/vol/data`, `/vol/output`)
+- `src/paths.py`: `resolve_roots()`, which returns the same pair when `MODAL_TASK_ID` is set
+
+`paths.py` does not import them from `modal_app.py`: that module requires the `modal` package,
+which a purely local run does not need.
