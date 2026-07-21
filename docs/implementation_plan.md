@@ -183,16 +183,19 @@
 
 ## Methods
 
-Scoped to 6 methods, one or more per family.
+Scoped to 9 methods, one or more per family.
 
 | # | Method | Family | Source | Status |
 | - | - | - | - | - |
 | 1a | Intensity Thresholding | Traditional | self-implement | [ ] |
 | 2 | Active Contours | Model-based | self-implement | [ ] |
+| 3b | Graph-Cut | Graph-based | self-implement | [ ] |
 | 3c | Dynamic Programming | Graph-based | self-implement | [ ] |
 | 4 | Region-based (region growing) | Region-based | self-implement | [ ] |
 | 5d | U-Net | Deep Learning | self-implement | [ ] |
 | 5b | CNN with Graph-based | Deep Learning | 5d + 3c | [ ] |
+| 5c | Fully CNN (ReLayNet) | Deep Learning | vendored `Lesions_Segment/ReLayNet_2017.py` | [ ] |
+| 5e | Boundary-Aware U-Net | Deep Learning | vendored `Layers_Segment/SD_Layer_Net/` | [ ] |
 
 **5b's backbone is 5d**, fixed, so the 5b-vs-5d contrast is a clean ablation of the graph pass.
 That contrast measures 3c's DP optimization *on top of* the non-crossing already enforced on every
@@ -203,21 +206,29 @@ no notion of boundary identity, each assigns detections to the 6 boundaries by f
 bottom order instead, leaving a boundary NaN where no transition is defensible. Expect low
 coverage and high MAD on the four low-contrast inner boundaries.
 
-**Scope cuts.** Cut from 8 methods to 6 under a 5-day budget. The binding constraint is GPU hours,
-not implementation time: 4 DL methods x 5 folds x 3 seeds is ~60 training runs, and at roughly
-1.5-2 h per run (~1,460 training B-scans, 224x1024 canvas, ~50 epochs to early stopping) that is
-100+ GPU-hours. 2 DL methods x 5 folds x 1 seed is ~18.
+**Scope.** 9 methods, 4 of them Deep Learning. The binding constraint is GPU hours, not
+implementation time, and the arithmetic turns on seeds rather than on method count: 4 DL methods
+x 5 folds x 3 seeds is ~60 training runs, and at roughly 1.5-2 h per run (~1,460 training
+B-scans, 224x1024 canvas, ~50 epochs to early stopping) that is 100+ GPU-hours. The same 4
+methods at 1 seed is 20 runs, roughly 30-40 GPU-hours, which the budget absorbs.
 
-Running on Modal changes what that number costs but not what it is. Folds run concurrently, so
-the budget binds on total GPU-hours billed rather than on wall-clock, and the cut stands
-on the same arithmetic.
+The earlier cut to 6 methods bundled two reductions, the DL arm and the seed count. Only the
+seed reduction was load-bearing, so 5c and 5e are restored and the single-seed protocol stays
+(see Evaluation > Seeds). Seeds are now at the floor, so any further economizing has to drop
+methods: 5e first, on adaptation risk.
 
-5c and 5e are the cuts, both recorded in Future Work as time rather than merit. Every family keeps
-a representative and the 5b-vs-5d ablation survives, so the comparison still answers its question
-with a smaller DL arm. Restore 5c first.
+3b is classical and runs on CPU, so restoring it moves no GPU-hours at all. It was originally
+deferred behind the DL restorations only because the arm was incomplete, never because the
+compute budget reached it.
 
-These per-run figures are estimates. Stage 0 replaces them with a measurement, and the scope should
-be revisited once it does.
+Running on Modal changes what a run costs but not what it is. Folds run concurrently, so the
+budget binds on total GPU-hours billed rather than on wall-clock.
+
+These per-run figures are estimates. `modal_app.DEFAULT_GPU` is pinned to `A100`, a faster tier
+than the 1.5-2 h figure assumed, so the real per-run cost is likely below it. Stage 0 replaces
+the estimate with a measurement from `benchmark_gpus()`, and the scope should be revisited once
+it does. Headroom goes to the 3-seed protocol before 5f: single-seed results carry a stated
+limitation, and 5f has no vendored starting point.
 
 ## Evaluation
 
@@ -234,7 +245,7 @@ For each method, record:
 
 **Seeds.** Averaged *within* a fold, not treated as independent samples (method x fold x seed as
 independent observations is pseudo-replication). **1 seed per fold**, forced by the compute budget
-(see Scope cuts). 1a, 2, 3c and 4 are deterministic and would run once regardless.
+(see Methods > Scope). 1a, 2, 3c and 4 are deterministic and would run once regardless.
 
 The exception: 5d runs 3 seeds on **one** fold, about 2 extra runs. That is enough to say whether
 seed spread is small relative to fold spread, which is the question the seed protocol existed to
@@ -276,16 +287,18 @@ Expect this to put every DL method in the 6/6 tier and 1a/2/4 well below it, mak
 capability finding rather than a precision one. The precision comparisons carrying the scientific
 claim (5b vs 5d above all) sit inside the 6/6 tier, where ranking reduces to plain aggregate MAD.
 
-**Order.** Stage 0: one fold, one seed, all 6 methods, to shake out adapters/padding/CSV plumbing
+**Order.** Stage 0: one fold, one seed, all 9 methods, to shake out adapters/padding/CSV plumbing
 (report nothing). Run it before anything else: it converts the compute estimate below into a real
 per-epoch number and catches adapter bugs before they waste an overnight training run. It also
 sets the GPU type: `modal_app.benchmark_gpus()` times a short run on each candidate, and
 `DEFAULT_GPU` is set from that measurement rather than an estimate. Stage 1:
-classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and sets the baseline floor.
+classical (1a, 2, 3b, 3c, 4) at full 5-fold, near-free without training and sets the baseline floor.
 These methods are deterministic and run no training loop, so Stage 1 de-risks the data/metrics/CSV
-path only. Stage 2: DL (5d, then 5b). 5d first: it is 5b's pinned backbone, and it is where the
-shared training loop is de-risked, validated against self-written code so model bugs stay
-separable from harness bugs. 5b additionally needs 3c.
+path only. Stage 2: DL (5d, then 5b, then 5c and 5e). 5d first: it is 5b's pinned backbone, and
+it is where the shared training loop is de-risked, validated against self-written code so model
+bugs stay separable from harness bugs. 5b additionally needs 3c. 5c and 5e run last because they
+are vendored adaptations: their risk is adapter work against a proven harness, not the harness
+itself, and 5e carries the most of it.
 
 **3c is the critical path.** 5b depends on it, so slipping 3c costs two methods rather than one.
 It is the one item worth reordering the schedule around.
@@ -310,10 +323,7 @@ additive: implementing any of them extends the comparison without changing the e
 
 | # | Method | Family | Cost of dropping | Reason |
 | - | - | - | - | - |
-| 5c | Fully CNN (ReLayNet) | Deep Learning | **High** | Cut for **time, not merit**: a vendored `ReLayNet_2017.py` starting point exists and it was the no-topology DL baseline alongside 5d. Restore first, ahead of 3b, if the schedule allows |
-| 5e | Boundary-Aware U-Net | Deep Learning | **High** | Cut for **time, not merit**: vendored `SD_Layer_Net/`, so it carries the highest adaptation risk per hour of any remaining method under a 5-day budget. Loses the boundary-aware DL variant |
-| 3b | Graph-Cut | Graph-based | **High** | Genuinely distinct from 3c: solves all boundaries simultaneously as a min s-t cut with global optimality and structural non-crossing guarantees, rather than per-boundary. The first method to restore once the DL arm is whole |
-| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family, the only family left with no representative in the table. Cut on scope: the DL arm was already at its ceiling before the time cuts above |
+| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family, the only family left with no representative in the table. Cut on implementation cost rather than compute: no vendored starting point exists in `external/`, unlike 5c and 5e |
 | 1b | Canny Edge Detection | Traditional | Low | Redundant with 1a as a traditional floor: same ordinal identity assignment, different edge detector. In the literature it is a cost-map generator feeding graph search/DP, not a standalone segmenter |
 | 3a | Graph Search (Shortest Path) | Graph-based | Low | Same weighted-graph formulation as 3c, different solver (Dijkstra vs DP recurrence). Near-duplicate result |
 | 5a | CNN | Deep Learning | Low | Subsumed by 5b, which is 5a plus a graph pass. 5d covers the no-topology DL baseline |
@@ -326,9 +336,9 @@ Three states, kept distinct in the write-up:
 
 | State | Methods | Treatment |
 | - | - | - |
-| Implemented and measured | the 6 in the Methods table | the only numbers this study produces |
-| Cut but covered | every Deep Learning entry above (5a, 5c, 5e, 5f, 5g, 5h) | architecture explained, published performance given as context for what was foregone |
-| Listed only | the non-DL cuts (1b, 3a, 3b) | named as future work, not presented |
+| Implemented and measured | the 9 in the Methods table | the only numbers this study produces |
+| Cut but covered | every Deep Learning entry above (5a, 5f, 5g, 5h) | architecture explained, published performance given as context for what was foregone |
+| Listed only | the non-DL cuts (1b, 3a) | named as future work, not presented |
 
 **Published numbers never share a table with measured ones.** Four protocol differences stack, and
 any one alone breaks comparability:
@@ -345,8 +355,6 @@ them published rather than measured.
 
 | # | Method | Vendored code | Paper citation | Published numbers |
 | - | - | - | - | - |
-| 5c | ReLayNet | `Lesions_Segment/ReLayNet_2017.py` | full BibTeX (Roy et al. 2017, BOE) | usable, see below |
-| 5e | SD_Layer_Net | `Layers_Segment/SD_Layer_Net/` | none in repo | not without identifying the source paper first |
 | 5a | CNN | none | n/a | generic architecture, no single result to quote |
 | 5f | TransUNet | none | n/a | literature only |
 | 5g | Swin-UNet | none | n/a | literature only |
@@ -355,17 +363,18 @@ them published rather than measured.
 No vendored TransUNet, Swin, ViT or 2.5D exists anywhere in `external/`. The name list in
 `src/s3_methods/m5_deep_learning/` describes intended scope, not available code.
 
-**The one defensible cross-reference.** ReLayNet was published on DUKE-DME (Chiu 2015), the same
-data as half this pool, and reports per-layer Dice. Its per-layer Dice on RNFL, GCL+IPL, INL and
-OPL against the Duke-only subset of this study's results compares the same quantity on the same
-data, which is the comparability carve-out in Setup > Comparability. Still confounded by split and
-preprocessing, so label it indicative, not controlled, and verify their split from the paper before
-quoting. No other cut method supports even this much.
+**5c against its published numbers.** ReLayNet was published on DUKE-DME (Chiu 2015), the same
+data as half this pool, and reports per-layer Dice. Now that 5c is measured rather than cut, that
+becomes an adaptation check rather than a substitute for running it: 5c's per-layer Dice on RNFL,
+GCL+IPL, INL and OPL over the Duke-only subset should land near the published figures, and a wide
+gap indicts the adapter before the method. Split and preprocessing still differ, so it bounds
+nothing tightly. Keep it out of the results table, verify their split from the paper before
+quoting, and label it indicative.
 
-**Describe 5e accurately if presented.** "Boundary-Aware U-Net" undersells the vendored code: an
+**Describe 5e accurately.** "Boundary-Aware U-Net" undersells the vendored code: an
 SDNet-style disentangled representation (separate anatomy and modality encoders, FiLM conditioning)
 over an attention U-Net, plus a `LayerEngine` doing column-wise soft position regression with
 Sobel/Laplacian kernels along the depth axis under a curvature-max constraint. That engine is a
 differentiable form of the same structural prior `s4_postprocessing/ordering.py` applies post hoc,
-which is the comparison worth drawing. `LayerEngine.__init__` also hardcodes `.cuda()` on its
-kernels, a concrete instance of the adaptation cost that drove the cut.
+which is the comparison worth drawing. `LayerEngine.__init__` hardcodes `.cuda()` on its kernels,
+which the adapter has to handle before 5e runs anywhere.

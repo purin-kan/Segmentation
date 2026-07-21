@@ -31,9 +31,10 @@ OUTPUT_ROOT = Path(VOLUME_PATH) / "output"
 PROCESSED_SUBDIRS = ("processed/duke_dme_denoised", "processed/hc_ms_denoised")
 FOLDS_PATH = "processed/folds.json"
 
-# Override per call with .with_options(gpu=...). Set this from a measurement,
-# not an estimate: see benchmark_gpus().
-DEFAULT_GPU = "A10"
+# Override per call with .with_options(gpu=...). Pinned ahead of the Stage 0
+# measurement; benchmark_gpus() still decides whether a cheaper tier holds the
+# per-run estimate.
+DEFAULT_GPU = "A100"
 
 # implementation_plan.md estimates 1.5-2 h per training run; leave headroom for
 # a slower GPU than the one that estimate assumed.
