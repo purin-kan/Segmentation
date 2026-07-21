@@ -243,6 +243,23 @@ carries the effect size and its uncertainty in the units the result is argued in
 does not. The per-patient scores are retained, so a paired test can be added later for a specific
 pre-specified comparison (5b vs 5d is the likeliest) without re-running anything.
 
+**Ranking.** Resolving a boundary is part of the task, not a precondition for being scored on it,
+so coverage enters the verdict rather than sitting beside it as a caveat. Methods are tiered by
+how many of the 6 boundaries they resolve, and a 6/6 method outranks a 2/6 method whatever its
+MAD. Within a tier the support is equal, so aggregate MAD ranks directly and paired per-patient
+differences on it are valid. Across tiers aggregate MAD is not a common quantity, is not
+compared, and the per-boundary table carries that comparison instead.
+
+A boundary counts as **resolved** only above a coverage floor and below a MAD bound. Both
+conditions are needed: coverage alone makes the primary axis gameable by predicting everywhere
+regardless of quality, which every DL method does for free. Set both thresholds from the Stage 1
+distributions rather than in advance, since what counts as "not a real segmentation" in px is not
+knowable until the ordinal methods have run.
+
+Expect this to put every DL method in the 6/6 tier and 1a/2/4 well below it, making the headline a
+capability finding rather than a precision one. The precision comparisons carrying the scientific
+claim (5b vs 5d above all) sit inside the 6/6 tier, where ranking reduces to plain aggregate MAD.
+
 **Order.** Stage 0: one fold, one seed, all 8 methods, to shake out adapters/padding/CSV plumbing
 (report nothing). Stage 1: classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and
 sets the baseline floor. These methods are deterministic and run no training loop, so Stage 1

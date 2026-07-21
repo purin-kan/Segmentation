@@ -37,3 +37,6 @@
 
 - Check Coverage alongside MAD/RMSE: a method that skips hard columns can look artificially accurate on MAD/RMSE alone.
 - Check MAD alongside Dice: a thick composite layer can mask real boundary error in Dice.
+- Aggregate MAD is only comparable between methods with equal coverage, since each method's mean
+  is taken over whichever boundaries it resolved. Cross-method ranking is tiered by boundaries
+  resolved, then MAD within a tier: see implementation_plan.md, Evaluation > Ranking.
