@@ -183,7 +183,7 @@
 
 ## Methods
 
-Scoped to 8 methods, one or more per family. 
+Scoped to 6 methods, one or more per family.
 
 | # | Method | Family | Source | Status |
 | - | - | - | - | - |
@@ -192,9 +192,7 @@ Scoped to 8 methods, one or more per family.
 | 3c | Dynamic Programming | Graph-based | self-implement | [ ] |
 | 4 | Region-based (region growing) | Region-based | self-implement | [ ] |
 | 5d | U-Net | Deep Learning | self-implement | [ ] |
-| 5c | Fully CNN (ReLayNet) | Deep Learning | vendored `ReLayNet_2017.py` | [ ] |
 | 5b | CNN with Graph-based | Deep Learning | 5d + 3c | [ ] |
-| 5e | Boundary-Aware U-Net | Deep Learning | vendored `SD_Layer_Net/` | [ ] |
 
 **5b's backbone is 5d**, fixed, so the 5b-vs-5d contrast is a clean ablation of the graph pass.
 That contrast measures 3c's DP optimization *on top of* the non-crossing already enforced on every
@@ -204,6 +202,18 @@ DL method by s4, not the presence versus absence of topological structure.
 no notion of boundary identity, each assigns detections to the 6 boundaries by fixed top-to-
 bottom order instead, leaving a boundary NaN where no transition is defensible. Expect low
 coverage and high MAD on the four low-contrast inner boundaries.
+
+**Scope cuts.** Cut from 8 methods to 6 under a 5-day budget. The binding constraint is GPU hours,
+not implementation time: 4 DL methods x 5 folds x 3 seeds is ~60 training runs, and at roughly
+1.5-2 h per run (~1,460 training B-scans, 224x1024 canvas, ~50 epochs to early stopping) that is
+100+ GPU-hours on an ephemeral Colab runtime. 2 DL methods x 5 folds x 1 seed is ~18.
+
+5c and 5e are the cuts, both recorded in Future Work as time rather than merit. Every family keeps
+a representative and the 5b-vs-5d ablation survives, so the comparison still answers its question
+with a smaller DL arm. Restore 5c first.
+
+These per-run figures are estimates. Stage 0 replaces them with a measurement, and the scope should
+be revisited once it does.
 
 ## Evaluation
 
@@ -219,11 +229,13 @@ For each method, record:
 - Metrics stratified by dataset (Duke vs HC-MS), not only pooled: pooled scores are ~94% HC-MS.
 
 **Seeds.** Averaged *within* a fold, not treated as independent samples (method x fold x seed as
-independent observations is pseudo-replication). Run 3 seeds on 5c and 5d, compare seed spread
-against fold spread, and drop to 2 or 1 for the rest if it is small. **5e keeps 3 seeds
-regardless**: it is vendored and the most stochastic of the set, so its variance cannot be
-extrapolated from the two stable self-written models. 1a, 2, 3c and 4 are deterministic: 1 run
-per fold.
+independent observations is pseudo-replication). **1 seed per fold**, forced by the compute budget
+(see Scope cuts). 1a, 2, 3c and 4 are deterministic and would run once regardless.
+
+The exception: 5d runs 3 seeds on **one** fold, about 2 extra runs. That is enough to say whether
+seed spread is small relative to fold spread, which is the question the seed protocol existed to
+answer. It is not enough to average seeds within a fold, so single-seed results carry that as a
+stated limitation: a per-method score includes one draw of training noise.
 
 **Comparison.** Paired per-patient differences, not a significance test. Every patient is held out
 exactly once across the 5 folds, so each method yields 45 per-patient scores. A comparison is the
@@ -260,13 +272,20 @@ Expect this to put every DL method in the 6/6 tier and 1a/2/4 well below it, mak
 capability finding rather than a precision one. The precision comparisons carrying the scientific
 claim (5b vs 5d above all) sit inside the 6/6 tier, where ranking reduces to plain aggregate MAD.
 
-**Order.** Stage 0: one fold, one seed, all 8 methods, to shake out adapters/padding/CSV plumbing
-(report nothing). Stage 1: classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and
-sets the baseline floor. These methods are deterministic and run no training loop, so Stage 1
-de-risks the data/metrics/CSV path only. Stage 2: DL (5d, 5c, then 5b, 5e). 5d first: it is the
-backbone 5e builds on and 5b's pinned backbone, and it is where the shared training loop is
-de-risked, validated against self-written code so model bugs stay separable from harness bugs.
-5c is a leaf, nothing depends on it. 5b additionally needs 3c.
+**Order.** Stage 0: one fold, one seed, all 6 methods, to shake out adapters/padding/CSV plumbing
+(report nothing). Run it before anything else: it converts the compute estimate below into a real
+per-epoch number and catches adapter bugs before they waste an overnight training run. Stage 1:
+classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and sets the baseline floor.
+These methods are deterministic and run no training loop, so Stage 1 de-risks the data/metrics/CSV
+path only. Stage 2: DL (5d, then 5b). 5d first: it is 5b's pinned backbone, and it is where the
+shared training loop is de-risked, validated against self-written code so model bugs stay
+separable from harness bugs. 5b additionally needs 3c.
+
+**3c is the critical path.** 5b depends on it, so slipping 3c costs two methods rather than one.
+It is the one item worth reordering the schedule around.
+
+Stage 1 must land before the Ranking thresholds can be set: the coverage floor and MAD bound come
+from the classical methods' observed distributions.
 
 **Run mechanics.** Checkpoint per fold to Drive (Colab runtimes are ephemeral). Write one CSV row
 per (method, fold, seed, patient): `run_experiment.py` currently collapses to one row per method,
@@ -281,10 +300,12 @@ additive: implementing any of them extends the comparison without changing the e
 
 | # | Method | Family | Cost of dropping | Reason |
 | - | - | - | - | - |
-| 3b | Graph-Cut | Graph-based | **High** | Genuinely distinct from 3c: solves all boundaries simultaneously as a min s-t cut with global optimality and structural non-crossing guarantees, rather than per-boundary. The first method to restore if there is room for a ninth |
-| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family, the only family left with no representative in the table. Cut on scope alone: 8 methods is this pass's ceiling and the DL arm already spans four. First DL method to restore |
+| 5c | Fully CNN (ReLayNet) | Deep Learning | **High** | Cut for **time, not merit**: a vendored `ReLayNet_2017.py` starting point exists and it was the no-topology DL baseline alongside 5d. Restore first, ahead of 3b, if the schedule allows |
+| 5e | Boundary-Aware U-Net | Deep Learning | **High** | Cut for **time, not merit**: vendored `SD_Layer_Net/`, so it carries the highest adaptation risk per hour of any remaining method under a 5-day budget. Loses the boundary-aware DL variant |
+| 3b | Graph-Cut | Graph-based | **High** | Genuinely distinct from 3c: solves all boundaries simultaneously as a min s-t cut with global optimality and structural non-crossing guarantees, rather than per-boundary. The first method to restore once the DL arm is whole |
+| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family, the only family left with no representative in the table. Cut on scope: the DL arm was already at its ceiling before the time cuts above |
 | 1b | Canny Edge Detection | Traditional | Low | Redundant with 1a as a traditional floor: same ordinal identity assignment, different edge detector. In the literature it is a cost-map generator feeding graph search/DP, not a standalone segmenter |
 | 3a | Graph Search (Shortest Path) | Graph-based | Low | Same weighted-graph formulation as 3c, different solver (Dijkstra vs DP recurrence). Near-duplicate result |
-| 5a | CNN | Deep Learning | Low | Subsumed by 5b, which is 5a plus a graph pass. 5c/5d already cover the no-topology DL baseline |
+| 5a | CNN | Deep Learning | Low | Subsumed by 5b, which is 5a plus a graph pass. 5d covers the no-topology DL baseline |
 | 5g | Swin Transformer (Swin-UNet) | Deep Learning | Low | No vendored starting point anywhere in `external/`, so the highest implementation cost on the list for a result confounded by the same data scarcity as 5f |
 | 5h | 2.5D | Deep Learning | Low | Already marked beyond scope. No vendored file stacks multi-slice input, and the only retinal-layer-specific reference is a 2026 preprint |
