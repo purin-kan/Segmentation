@@ -6,8 +6,10 @@
       come from Lang et al. 2013, which delineated the same 35 scans. He 2019 is the data
       release and defines no boundaries.)
   - **Layer-level ground truth**: Both datasets provide expert-annotated boundary/layer segmentation
-    - HC-MS has 9 boundaries while DUKE-DME has 8, but the identities differ by 3, not 1.
-      Union = 10, intersection = 6.
+    - HC-MS has 9 boundaries while DUKE-DME has 8, but these are not 9 vs 8 of the same curves.
+      HC-MS draws 2 that Duke does not (ELM, OS/RPE); Duke brackets the ellipsoid band with 2
+      lines where HC-MS crosses it with 1, and which of Duke's 2 that single line matches is
+      unresolved. Union = 10, intersection = 6.
 
       | idx | interface | Lang 2013 (HC-MS) | Chiu 2015 (Duke) | kept |
       |----|-----------|-------------------|------------------|:----:|
@@ -191,8 +193,12 @@ Scoped to 8 methods, one or more per family.
 | 4 | Region-based (region growing) | Region-based | self-implement | [ ] |
 | 5d | U-Net | Deep Learning | self-implement | [ ] |
 | 5c | Fully CNN (ReLayNet) | Deep Learning | vendored `ReLayNet_2017.py` | [ ] |
-| 5b | CNN with Graph-based | Deep Learning | 5c/5d + 3c | [ ] |
+| 5b | CNN with Graph-based | Deep Learning | 5d + 3c | [ ] |
 | 5e | Boundary-Aware U-Net | Deep Learning | vendored `SD_Layer_Net/` | [ ] |
+
+**5b's backbone is 5d**, fixed, so the 5b-vs-5d contrast is a clean ablation of the graph pass.
+That contrast measures 3c's DP optimization *on top of* the non-crossing already enforced on every
+DL method by s4, not the presence versus absence of topological structure.
 
 **Identity by anatomical order, not labeling.** 1a, 2 and 4 detect edges/regions generically, with
 no notion of boundary identity, each assigns detections to the 6 boundaries by fixed top-to-
@@ -205,7 +211,8 @@ For each method, record:
 
 - Primary/secondary metric scores on each of the 5 patient-level CV folds, reported as mean +/-
   CI across folds. Each fold's held-out patients are the scoring set; there is no separate fixed
-  test split (see Setup > Split)
+  test split (see Setup > Split). This is the per-method descriptive headline; cross-method
+  comparison is paired per patient instead (see Comparison)
 - Failure cases: where does it break down? (low contrast, speckle noise, boundaries near lesions, thin/merging layers, etc.)
 - Qualitative overlay of predicted vs. ground-truth boundaries on a few representative
   B-scans
@@ -213,23 +220,42 @@ For each method, record:
 
 **Seeds.** Averaged *within* a fold, not treated as independent samples (method x fold x seed as
 independent observations is pseudo-replication). Run 3 seeds on 5c and 5d, compare seed spread
-against fold spread, and drop to 2 or 1 for the rest if it is small. 1a, 2, 3c and 4 are
-deterministic: 1 run per fold.
+against fold spread, and drop to 2 or 1 for the rest if it is small. **5e keeps 3 seeds
+regardless**: it is vendored and the most stochastic of the set, so its variance cannot be
+extrapolated from the two stable self-written models. 1a, 2, 3c and 4 are deterministic: 1 run
+per fold.
 
-**Comparison.** Paired Wilcoxon signed-rank across the 5 folds, with multiple-comparison
-correction over the pairs compared. Folds are where patient-to-patient variance (dominant at
-n=45) lives.
+**Comparison.** Paired per-patient differences, not a significance test. Every patient is held out
+exactly once across the 5 folds, so each method yields 45 per-patient scores. A comparison is the
+mean paired difference with a bootstrap CI over patients, reported in px. Two constraints: the
+difference must be computed on a common support (see Setup > Metrics), or the pair compares
+different quantities; and it must be paired per patient, not read off two methods' overlapping
+mean +/- CI, which is a weaker inference.
+
+Stratified comparisons run the same way. By patient the split is 10 Duke vs 35 HC-MS, less
+lopsided than the 94% B-scan imbalance. DME is reported as a per-patient distribution (n=10)
+rather than a fold-level estimate: at ~2 held-out DME patients per fold, one atypical patient
+swings the fold.
+
+**No p-values.** 5 folds cannot support a test at all (2^5 sign arrangements put the minimum
+two-sided p at 0.0625, before any multiple-comparison correction). A difference CI in px also
+carries the effect size and its uncertainty in the units the result is argued in, which a p-value
+does not. The per-patient scores are retained, so a paired test can be added later for a specific
+pre-specified comparison (5b vs 5d is the likeliest) without re-running anything.
 
 **Order.** Stage 0: one fold, one seed, all 8 methods, to shake out adapters/padding/CSV plumbing
 (report nothing). Stage 1: classical (1a, 2, 3c, 4) at full 5-fold, near-free without training and
-sets the baseline floor. Stage 2: DL (5d, 5c, then 5b, 5e). 5d first: it is the backbone 5e builds
-on and one of 5b's two options, and validating the untested shared training loop against
-self-written code keeps model bugs separable from harness bugs. 5c is a leaf, nothing depends on
-it. 5b additionally needs 3c.
+sets the baseline floor. These methods are deterministic and run no training loop, so Stage 1
+de-risks the data/metrics/CSV path only. Stage 2: DL (5d, 5c, then 5b, 5e). 5d first: it is the
+backbone 5e builds on and 5b's pinned backbone, and it is where the shared training loop is
+de-risked, validated against self-written code so model bugs stay separable from harness bugs.
+5c is a leaf, nothing depends on it. 5b additionally needs 3c.
 
 **Run mechanics.** Checkpoint per fold to Drive (Colab runtimes are ephemeral). Write one CSV row
-per (method, fold, seed): `run_experiment.py` currently collapses to one row per method, and the
-per-run rows are what the paired test needs. If economizing, cut seeds before folds.
+per (method, fold, seed, patient): `run_experiment.py` currently collapses to one row per method,
+and `OCTDataset.__getitem__` does not return `subject_id` at all, so patient identity has to be
+threaded through before the paired differences can be computed. If economizing, cut seeds before
+folds.
 
 ## Future Work
 
@@ -239,7 +265,7 @@ additive: implementing any of them extends the comparison without changing the e
 | # | Method | Family | Cost of dropping | Reason |
 | - | - | - | - | - |
 | 3b | Graph-Cut | Graph-based | **High** | Genuinely distinct from 3c: solves all boundaries simultaneously as a min s-t cut with global optimality and structural non-crossing guarantees, rather than per-boundary. The first method to restore if there is room for a ninth |
-| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family. Also the method most confounded by dataset scale (1,825 annotated B-scans), so its result would be the hardest to attribute to architecture |
+| 5f | Transformer-based (TransUNet) | Deep Learning | Moderate | Loses the transformer family, the only family left with no representative in the table. Cut on scope alone: 8 methods is this pass's ceiling and the DL arm already spans four. First DL method to restore |
 | 1b | Canny Edge Detection | Traditional | Low | Redundant with 1a as a traditional floor: same ordinal identity assignment, different edge detector. In the literature it is a cost-map generator feeding graph search/DP, not a standalone segmenter |
 | 3a | Graph Search (Shortest Path) | Graph-based | Low | Same weighted-graph formulation as 3c, different solver (Dijkstra vs DP recurrence). Near-duplicate result |
 | 5a | CNN | Deep Learning | Low | Subsumed by 5b, which is 5a plus a graph pass. 5c/5d already cover the no-topology DL baseline |

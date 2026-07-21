@@ -12,7 +12,9 @@
 
 - **Dice** — `2 × overlap / (area_pred + area_true)`
   - Inflates for thick layers regardless of boundary accuracy.
-  - Example: the composite ONL→BM layer.
+  - Example: the composite ONL→BM layer (layer 5). Its Dice is not merely inflated but
+    uninformative about either of its own boundaries: the thick middle dominates the overlap,
+    so error at OPL/ONL or BM barely moves the score.
   - Supporting metric, not the headline.
 - **IoU** — `overlap / union`
   - Always ≤ Dice for the same two masks.

@@ -52,8 +52,16 @@ elsewhere. Established practice (partially-supervised segmentation), not novel:
 - "General retinal layer segmentation in OCT via reinforcement constraint," *MedIA* 2024.
   Applies this to OCT layers at differing granularity, HC-MS included.
 
-Rejected because harmonization is not the experiment's focus, and it does not dissolve boundary
-8: that pair still has to be resolved or split into two dataset-specific indices.
+Masked union does dissolve boundary 8: splitting it into two dataset-specific output channels,
+each masked to its source dataset, is the method. The model is never asked to reconcile Duke's
+two ellipsoid lines with HC-MS's single `IS-OS`.
+
+Rejected on scope and cost alone: harmonization is not the experiment's focus.
+
+**Known limitation of dropping the outer retina instead.** The study reports nothing on ELM,
+IS/OS or OS/RPE. Those are the outer-retinal boundaries where DME and AMD biomarkers
+concentrate, so the omission is a real scientific cost, accepted here as the price of an
+early-stage comparison.
 
 ## Data quality
 
