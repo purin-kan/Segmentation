@@ -4,25 +4,24 @@ Call after the repo root is on sys.path (each notebook's first cell does this
 itself — that step can't live here, since it's what makes `import src` work).
 """
 
+import os
 from pathlib import Path
 
 
 def resolve_roots() -> tuple[Path, Path]:
-    """Mount Drive and return (DATA_ROOT, OUTPUT_ROOT) under it on Colab,
-    or local data/ + output/ folders otherwise. Creates raw/processed/output
-    subfolders if missing.
+    """Return (DATA_ROOT, OUTPUT_ROOT): the mounted Modal Volume inside a
+    Modal container, local data/ + output/ folders anywhere else. Creates
+    raw/processed/output subfolders if missing.
 
-    Keep the 'Segmentation/output' Drive path in sync with
-    scripts/pull_from_drive.py's --drive-base / subpath.
+    Keep the volume paths in sync with modal_app.py's DATA_ROOT / OUTPUT_ROOT.
+    Not imported from there: that module needs the modal package, which a
+    local run does not require.
     """
-    try:
-        from google.colab import drive
-
-        drive.mount("/content/drive")
-        drive_root = Path("/content/drive/MyDrive/Segmentation")
-        data_root = drive_root / "data"
-        output_root = drive_root / "output"
-    except ImportError:
+    if "MODAL_TASK_ID" in os.environ:
+        volume_root = Path("/vol")
+        data_root = volume_root / "data"
+        output_root = volume_root / "output"
+    else:
         data_root = Path("data")
         output_root = Path("output")
 

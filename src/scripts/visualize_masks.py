@@ -5,7 +5,7 @@ Masks are not persisted by the pipeline — OCTDataset derives them on the fly
 via boundaries_to_layer_masks. This script saves them to disk for inspection.
 
 Runs locally against data/processed/{duke_dme,hc_ms}_denoised (or the DATA_ROOT
-equivalent). Not a Colab notebook step; see src/scripts/README.md.
+equivalent). Not a notebook step and not a Modal step; see src/scripts/README.md.
 
 Edit the config block below, then run:
     python src/scripts/visualize_masks.py

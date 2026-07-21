@@ -43,10 +43,11 @@ src/                              # All self-implemented Python (experiment code
     region_metrics.py             # Dice, IoU — per layer, then averaged
     boundary_metrics.py           # MAD, RMSE — per boundary, then averaged
     run_experiment.py             # Shared eval harness: dataset -> method -> metrics -> output/*.csv
-  notebooks/                      # Colab notebooks — the actual run entry points (see below)
-  scripts/                        # Local-machine helpers (NOT Colab): Google Drive relay — see src/scripts/README.md
+  modal_app.py                    # Modal app: GPU containers for DL training + DL scoring (see below)
+  notebooks/                      # The run entry points, run locally (see below)
+  scripts/                        # Local-machine helpers: visual QA + Modal volume transfer — see src/scripts/README.md
 
-output/                           # Gitignored — metric CSVs, overlays, checkpoints (Drive-backed OUTPUT_ROOT on Colab)
+output/                           # Gitignored — metric CSVs, overlays, checkpoints (Volume-backed OUTPUT_ROOT on Modal)
 data/                             # Gitignored — raw + preprocessed DUKE-DME data
   raw/                            # Untouched downloaded datasets (e.g. Publication_Dataset/, .zip archives)
   processed/                      # Output of src/s2_preprocessing/ + src/notebooks/01_preprocessing.ipynb
@@ -70,27 +71,33 @@ external/                         # Vendored reference repos (read-only, see abo
 `src/s3_methods/*` are currently stubs (`raise NotImplementedError`) — implementation status per
 method is tracked in `docs/implementation_plan.md`'s Methods table, not here.
 
-### Notebooks are the run surface
+### Notebooks are the run surface; GPU work runs on Modal
 
-This project's experiment code executes exclusively on a Google Colab server (connected via the
-VS Code Colab extension, working directly against local workspace files — no `git clone` step).
-The experiment has no local run surface — `notebooks/*.ipynb` are the actual entry points, run in
-order:
+`notebooks/*.ipynb` are the entry points and run locally. The GPU-bound steps (DL training, DL
+scoring) do not run in the notebook kernel: they run in Modal containers defined by
+`src/modal_app.py`, which the notebooks invoke with `.remote()` / `.starmap()`. Everything else
+runs in the kernel.
 
-1. `00_setup.ipynb` — the sole setup notebook: install deps, verify imports, pull `external/*`
-   submodules. Its (optional) Drive cell mounts Google Drive and defines `DATA_ROOT` / `OUTPUT_ROOT`
-   at `MyDrive/Segmentation/` so data + results persist across the ephemeral runtime. Downstream
-   notebooks read those two variables, so run this first.
-2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/s2_preprocessing/`
-3. `02_run_methods.ipynb` — import one `src/s3_methods/*` implementation, score it via `src/s5_eval/run_experiment.py`; writes per-method CSVs under `OUTPUT_ROOT`
-4. `03_results_analysis.ipynb` — load the `OUTPUT_ROOT/*.csv` summaries, build the cross-method comparison table
+Run the notebooks in order:
+
+1. `00_setup.ipynb` — the sole setup notebook: install deps locally, verify imports, pull
+   `external/*` submodules, check `modal` is authenticated, and define `DATA_ROOT` /
+   `OUTPUT_ROOT` via `src/paths.py`. Downstream notebooks read those two variables, so run
+   this first.
+2. `01_preprocessing.ipynb` — raw `.mat` → PNG via `external/Public-available-retinal-OCT-datasets/BOE.py`, then `src/s2_preprocessing/`. Local.
+3. `02a_train_dl.ipynb` — train one DL method across folds on Modal, all folds concurrently; checkpoints land on the Volume. Classical methods skip this.
+4. `02_run_methods.ipynb` — score a method via `src/s5_eval/run_experiment.py`. Classical methods (1a, 2, 3c, 4) score locally; DL methods (5d, 5b) score on Modal.
+5. `03_results_analysis.ipynb` — load the `OUTPUT_ROOT/*.csv` summaries, build the cross-method comparison table. Local.
 
 Everything under `src/` must stay plain importable Python (functions/classes), not
-argparse-only CLI scripts, so it can be called directly from notebook cells.
+argparse-only CLI scripts, so it can be called directly from notebook cells. `modal_app.py` is
+the one module that also exposes a CLI (`modal run src/modal_app.py`), as a batch-sweep
+convenience; its functions stay importable and are what the notebooks call.
 
-The one exception to "runs on Colab": `src/scripts/` holds **local-machine** helpers that run on your
-own computer, not the Colab VM — a Google Drive relay to pull `OUTPUT_ROOT` results down and clear
-them off Drive. See `src/scripts/README.md`.
+Data does not travel with the code. Input lives on the `segmentation-data` Modal Volume and
+must be seeded once with `modal volume put`; results are pulled back with `modal volume get`.
+`src/scripts/` holds local-machine helpers (visual QA scripts, plus those transfer commands).
+See `src/scripts/README.md`.
 
 ## Key Architectural Patterns
 
@@ -124,11 +131,18 @@ python external/Public-available-retinal-OCT-datasets/RETOUCH.py
 ## Dependencies
 
 Pinned in `requirements.txt`: `numpy`, `scipy`, `scikit-image`, `scikit-learn`, `Pillow`, `h5py`,
-`imageio`, `opencv-python`, `SimpleITK`, `matplotlib`, `torch`, `torchvision`, `einops`, `timm`, `thop`.
+`imageio`, `opencv-python`, `SimpleITK`, `matplotlib`, `bm3d`, `modal`, `torch`, `torchvision`,
+`einops`, `timm`, `thop`.
 
-`00_setup.ipynb` installs them on the Colab runtime with `pip install -r requirements.txt`. There is
-no `setup.py` — `src/` is imported directly from the notebooks (kept plain-importable), not installed
-as a package.
+The same `requirements.txt` is installed twice, from one source of truth: `00_setup.ipynb`
+installs it into your local environment, and `src/modal_app.py` builds it into the Modal image
+with `pip_install_from_requirements`. The Modal image additionally `apt_install`s `libgl1` and
+`libglib2.0-0`, which `opencv-python` and `SimpleITK` link against and which `debian_slim` does
+not ship.
+
+There is no `setup.py` — `src/` is imported directly from the notebooks (kept plain-importable),
+not installed as a package. Inside a Modal container it is made importable by
+`add_local_python_source("src")`.
 
 ## Working Directory
 
